@@ -1,0 +1,220 @@
+# ────────────────────────────────────────────────────────────
+# Skill taxonomy. Every skill the system recognises, with its
+# aliases. Without this, "Scikit-learn", "scikit learn" and
+# "sklearn" are three different skills and ranking breaks.
+#
+# Grow this from the requirement checklists of the ten job
+# profiles — those are the skills that actually matter.
+#
+# ملحوظة (Sprint 2 - CV/JD Ranking): الإضافات اللي تحت خط
+# "--- Sprint 2 additions ---" اتحطت بناءً على تخمين من نفس
+# الفئات الأربعة الموجودة أصلًا (Data/BI, Frontend/Mobile, QA,
+# Security) - مفيش checklists فعلية لعشر الوظائف موجودة في
+# المشروع وقت كتابة السطور دي. لازم تتراجع/تتعدّل لما الـ
+# checklists الحقيقية تتوفر.
+# ────────────────────────────────────────────────────────────
+
+skills:
+  - id: skill.python
+    name: Python
+    aliases: [python3, "python 3", py]
+    category: language
+
+  - id: skill.sql
+    name: SQL
+    aliases: [t-sql, tsql, "structured query language"]
+    category: language
+
+  - id: skill.pandas
+    name: Pandas
+    aliases: [pandas]
+    category: library
+
+  - id: skill.sklearn
+    name: Scikit-learn
+    aliases: [sklearn, "scikit learn", scikitlearn]
+    category: library
+
+  - id: skill.xgboost
+    name: XGBoost
+    aliases: [xgb, "x-gboost"]
+    category: library
+
+  - id: skill.powerbi
+    name: Power BI
+    aliases: [powerbi, "power-bi", pbi]
+    category: tool
+
+  - id: skill.dax
+    name: DAX
+    aliases: ["data analysis expressions"]
+    category: language
+
+  - id: skill.excel
+    name: Excel
+    aliases: ["microsoft excel", "ms excel"]
+    category: tool
+
+  - id: skill.tableau
+    name: Tableau
+    aliases: []
+    category: tool
+
+  - id: skill.azure_ml
+    name: Azure ML
+    aliases: ["azure machine learning", azureml]
+    category: platform
+
+  - id: skill.react
+    name: React
+    aliases: [reactjs, "react.js"]
+    category: framework
+
+  - id: skill.flutter
+    name: Flutter
+    aliases: []
+    category: framework
+
+  - id: skill.selenium
+    name: Selenium
+    aliases: [webdriver]
+    category: tool
+
+  - id: skill.siem
+    name: SIEM
+    aliases: [splunk, qradar, "security information and event management"]
+    category: domain
+
+  # ──────────────────────────────────────────────────────────
+  # --- Sprint 2 additions (تخمين - راجع الملحوظة فوق) ---
+  # ──────────────────────────────────────────────────────────
+
+  # --- Data / BI ---
+  - id: skill.numpy
+    name: NumPy
+    aliases: [numpy]
+    category: library
+
+  - id: skill.matplotlib
+    name: Matplotlib
+    aliases: [matplotlib, "matplotlib.pyplot"]
+    category: library
+
+  - id: skill.mysql
+    name: MySQL
+    aliases: ["my sql"]
+    category: tool
+
+  - id: skill.postgresql
+    name: PostgreSQL
+    aliases: [postgres, "postgre sql"]
+    category: tool
+
+  - id: skill.tensorflow
+    name: TensorFlow
+    aliases: [tf]
+    category: library
+
+  - id: skill.pytorch
+    name: PyTorch
+    aliases: [torch]
+    category: library
+
+  # --- Frontend / Mobile / Web ---
+  - id: skill.javascript
+    name: JavaScript
+    aliases: [js, "java script"]
+    category: language
+
+  - id: skill.typescript
+    name: TypeScript
+    aliases: [ts]
+    category: language
+
+  - id: skill.html_css
+    name: HTML/CSS
+    aliases: [html, css, "html5", "css3"]
+    category: language
+
+  - id: skill.nodejs
+    name: Node.js
+    aliases: [node, nodejs, "node js"]
+    category: platform
+
+  - id: skill.vuejs
+    name: Vue.js
+    aliases: [vue, vuejs]
+    category: framework
+
+  - id: skill.angular
+    name: Angular
+    aliases: [angularjs]
+    category: framework
+
+  - id: skill.kotlin
+    name: Kotlin
+    aliases: []
+    category: language
+
+  - id: skill.swift
+    name: Swift
+    aliases: []
+    category: language
+
+  # --- QA ---
+  - id: skill.appium
+    name: Appium
+    aliases: []
+    category: tool
+
+  - id: skill.postman
+    name: Postman
+    aliases: []
+    category: tool
+
+  - id: skill.jira
+    name: Jira
+    aliases: []
+    category: tool
+
+  # --- Security ---
+  - id: skill.penetration_testing
+    name: Penetration Testing
+    aliases: [pentest, "pen testing", "pen-testing"]
+    category: domain
+
+  - id: skill.nmap
+    name: Nmap
+    aliases: []
+    category: tool
+
+  - id: skill.wireshark
+    name: Wireshark
+    aliases: []
+    category: tool
+
+  # --- Cross-cutting engineering tools ---
+  - id: skill.git
+    name: Git
+    aliases: [github, gitlab]
+    category: tool
+
+  - id: skill.docker
+    name: Docker
+    aliases: [containerization]
+    category: tool
+
+  - id: skill.aws
+    name: AWS
+    aliases: ["amazon web services"]
+    category: platform
+
+  - id: skill.azure
+    name: Azure
+    aliases: ["microsoft azure"]
+    category: platform
+
+  - id: skill.gcp
+    name: GCP
+    aliases: ["google cloud", "google cloud platform"]
+    category: platform
