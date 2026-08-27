@@ -1,0 +1,61 @@
+# ────────────────────────────────────────────────────────────
+# Provider profiles. The pipeline never reads this file — the
+# factory does. Adding a provider = a class + a block here.
+# ────────────────────────────────────────────────────────────
+
+defaults:
+  temperature: 0.1          # extraction is not a creative task
+  max_tokens: 4096
+  retry_on_invalid_schema: 1
+  hard_timeout_seconds: 60
+
+providers:
+
+  api:
+    description: >
+      Hosted model over an OpenAI-compatible or Anthropic endpoint.
+      Default for real work: best quality, no GPU, no local setup.
+    supports_json_mode: true
+    supports_tools: true
+    cost_per_1k_input_usd: 0.00015
+    cost_per_1k_output_usd: 0.0006
+    notes:
+      - Redaction runs before every call. Non-negotiable.
+      - Spend is capped daily and the cap is enforced in code.
+
+  hf:
+    description: >
+      Hugging Face. Two modes: the hosted Inference API, or transformers
+      loaded in-process. Open models, reproducible, no vendor lock-in.
+    supports_json_mode: false      # enforce the schema ourselves
+    supports_tools: false
+    cost_per_1k_input_usd: 0.0
+    cost_per_1k_output_usd: 0.0
+    notes:
+      - inference_api needs HF_TOKEN.
+      - local_transformers is slow on CPU. Expect 30-90s per CV.
+      - Because JSON mode is unavailable, the schema repair path matters more here.
+
+  local:
+    description: >
+      Ollama or vLLM on your own machine. Offline, free, and the
+      demo-day contingency if a provider is unreachable.
+    supports_json_mode: true       # ollama supports format=json
+    supports_tools: false
+    cost_per_1k_input_usd: 0.0
+    cost_per_1k_output_usd: 0.0
+    notes:
+      - Start with:  ollama pull qwen2.5:7b-instruct
+      - Qwen2.5 is the recommended local model for Arabic at this size.
+
+  stub:
+    description: >
+      Deterministic canned responses. The default in tests and in UI work.
+      No network, no key, no spend.
+    supports_json_mode: true
+    supports_tools: false
+    cost_per_1k_input_usd: 0.0
+    cost_per_1k_output_usd: 0.0
+    notes:
+      - Can be told to simulate a timeout and a schema-invalid response.
+      - If the test suite does not pass with the stub, the test is wrong.

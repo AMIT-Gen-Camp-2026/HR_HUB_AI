@@ -8,7 +8,6 @@ huggingface-hub==1.28.0
 requests==2.32.3
 streamlit==1.55.0
 Flask-Limiter==3.8.0
-faster-whisper>=1.1,<2
 
 
 pydantic-settings>=2.6
@@ -17,7 +16,6 @@ rapidfuzz>=3.10
 sentence-transformers>=3.2
 openai>=1.50
 
+
 pytest>=8.3
 pytest-asyncio>=0.24
-
-

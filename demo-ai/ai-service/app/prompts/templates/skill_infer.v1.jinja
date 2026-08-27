@@ -1,0 +1,18 @@
+You are given the Projects and Experience sections of a CV, and the skills the candidate
+listed explicitly. Identify additional skills that are demonstrated by the text.
+
+Return ONLY a JSON array:
+[ { "name": str, "evidence": { "section": str, "span": str }, "confidence": float } ]
+
+HARD RULES
+- The skill name must appear literally in the text you were given.
+- Copy the supporting span verbatim.
+- Do not repeat a skill already in the explicit list: {{ explicit_skills | join(", ") }}
+- Do not generalise from an activity to a technology. Building something is not evidence
+  for a library that is not named.
+- Return an empty array if nothing qualifies. That is a valid and common answer.
+
+TEXT
+---
+{{ sections_text }}
+---

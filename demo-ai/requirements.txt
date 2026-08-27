@@ -15,9 +15,7 @@ pydantic-settings>=2.6
 pyyaml>=6.0
 rapidfuzz>=3.10
 sentence-transformers>=3.2
-openai>=1.50
+
 
 pytest>=8.3
 pytest-asyncio>=0.24
-
-

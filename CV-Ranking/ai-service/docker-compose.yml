@@ -1,0 +1,46 @@
+services:
+  ai-service:
+    build:
+      context: .
+      target: base
+    ports:
+      - "8100:8100"
+    env_file:
+      - .env
+    environment:
+      PROVIDER: ${PROVIDER:-stub}
+    volumes:
+      - ./app:/srv/app
+      - ./config:/srv/config
+    depends_on:
+      - redis
+
+  ui:
+    build:
+      context: .
+      target: base
+    command: streamlit run ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      AI_SERVICE_URL: http://ai-service:8100
+    depends_on:
+      - ai-service
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Uncomment for the local scenario
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama:/root/.ollama
+
+# volumes:
+#   ollama:
