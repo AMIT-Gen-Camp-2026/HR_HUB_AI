@@ -20,6 +20,7 @@ from app.pipeline.ranking import rank as compute_ranking
 from app.pipeline.run import extract_raw_text, clean_and_query
 from app.providers.hf_provider import ModelInferenceError
 from app.schemas.cv import CVSchema, JobDescription
+from app.security.auth import require_api_key
 from app.security.file_validator import (
     FileValidationError,
     generate_safe_storage_name,
@@ -48,6 +49,7 @@ def health():
 
 
 @app.route("/api/v1/cv/extract", methods=["POST"])
+@require_api_key
 @limiter.limit("10 per hour")
 def extract_cv():
     if "file" not in request.files:
@@ -102,6 +104,7 @@ def extract_cv():
 
 
 @app.route("/api/v1/rank", methods=["POST"])
+@require_api_key
 @limiter.limit("60 per hour")
 def rank_candidate():
     """

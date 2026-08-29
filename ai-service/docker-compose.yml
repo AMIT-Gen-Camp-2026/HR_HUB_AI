@@ -4,16 +4,12 @@ services:
       context: .
       target: base
     ports:
-      - "8100:8100"
+      - "5000:5000"          # لازم يطابق FLASK_PORT في .env (default 5000)
     env_file:
       - .env
-    environment:
-      PROVIDER: ${PROVIDER:-stub}
     volumes:
       - ./app:/srv/app
       - ./config:/srv/config
-    depends_on:
-      - redis
 
   ui:
     build:
@@ -25,22 +21,13 @@ services:
     env_file:
       - .env
     environment:
-      AI_SERVICE_URL: http://ai-service:8100
+      # ملحوظة: ui/streamlit_app.py حاليًا BASE_URL مكتوبة hardcoded كـ
+      # http://127.0.0.1:5000 - المتغير ده مش مقروء فعليًا لسه (انظر
+      # docs/DECISIONS.md لتفاصيل الفجوة دي وخطة إصلاحها).
+      AI_SERVICE_URL: http://ai-service:5000
     depends_on:
       - ai-service
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  # Uncomment for the local scenario
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ollama:/root/.ollama
-
-# volumes:
-#   ollama:
+  # redis اتشالت من هنا - مفيش حاجة في الكود الفعلي بتستخدمها دلوقتي
+  # (الـ rate limiter شغال in-memory). لو حبينا نعمل rate limiting/caching
+  # مشترك بين أكتر من gunicorn worker، وقتها نضيفها تاني ونربطها فعليًا.

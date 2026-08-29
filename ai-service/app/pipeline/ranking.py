@@ -1,8 +1,5 @@
 """
 app/pipeline/ranking.py
-
-الملف الأساسي لحساب score التوافق بين CV وJD - خوارزمية deterministic
-(skill set match + weights)، مفيش أي LLM call هنا خالص.
 """
 
 from __future__ import annotations
@@ -11,13 +8,9 @@ from app.providers.embeddings import semantic_fit
 from app.schemas.cv import CVSchema, JobDescription, RankingResult
 from app.skills.canonicalize import canonicalise
 
-# وزن أعلى لـ required_skills من nice_to_have_skills داخل hard_skill_score
-# نفسه. القيم دي تقديرية مني - محتاجة تأكيد/تعديل منك.
 REQUIRED_WEIGHT = 0.8
 NICE_TO_HAVE_WEIGHT = 0.2
 
-# دمج hard_skill_score مع semantic_fit - final_score =
-# 0.7 × hard_skill_score + 0.3 × semantic_fit، زي ما اتفقنا بالظبط.
 HARD_SKILL_WEIGHT = 0.7
 SEMANTIC_WEIGHT = 0.3
 
@@ -32,21 +25,17 @@ def _match_against_candidate(
     candidate_canonical: set[str],
     candidate_raw_lower: set[str],
 ) -> tuple[list[str], list[str]]:
-    """
-    بترجع (matched, missing) - أسماء الـ skills الأصلية زي ما اتكتبت
-    في الـ JD. كل skill بيتقارن: عن طريق canonical id لو معروف في
-    الـ taxonomy، أو fallback نصي حرفي (case-insensitive) لو مش معروف
-    (canonicalise() رجعت None) - عشان skill غير معروف للـ taxonomy
-    ميتحسبش missing ظلمًا لو موجود بنفس الاسم بالظبط في الـ CV.
-    """
     matched: list[str] = []
     missing: list[str] = []
 
     for skill in skills:
         canon = canonicalise(skill)
+        skill_clean = skill.strip().lower()
+        
+        # Check canonical match OR raw string exact/substring match
         if canon is not None and canon in candidate_canonical:
             matched.append(skill)
-        elif canon is None and skill.strip().lower() in candidate_raw_lower:
+        elif any(skill_clean == raw or skill_clean in raw for raw in candidate_raw_lower):
             matched.append(skill)
         else:
             missing.append(skill)
@@ -61,19 +50,18 @@ def _match_ratio(required: list[str], matched: list[str]) -> float | None:
 
 
 def rank(candidate: CVSchema, job_description: JobDescription) -> RankingResult:
-    """
-    ملحوظة: min_experience_years في JobDescription مش مستخدم في الحساب
-    ده حاليًا - CVSchema.Experience معندهاش تاريخ منظم يسهّل حساب
-    إجمالي سنين الخبرة منه.
-    """
+    # 1. تجميع كل المهارات المباشرة والغير مباشرة
     candidate_skill_names = (
         candidate.skills
         + candidate.inferred_skills
         + [tech for project in candidate.projects for tech in project.technologies_mentioned]
+        + [exp.job_title for exp in candidate.experience if exp.job_title]
     )
+    
     candidate_canonical = _canonical_set(candidate_skill_names)
-    candidate_raw_lower = {s.strip().lower() for s in candidate_skill_names}
+    candidate_raw_lower = {s.strip().lower() for s in candidate_skill_names if s}
 
+    # 2. مطابقة الـ Skills
     matched_required, missing_required = _match_against_candidate(
         job_description.required_skills, candidate_canonical, candidate_raw_lower
     )
@@ -95,9 +83,11 @@ def rank(candidate: CVSchema, job_description: JobDescription) -> RankingResult:
 
     hard_skill_score = (weighted_sum / weight_total) if weight_total > 0 else 0.0
 
+    # 3. حساب الـ Semantic Fit (باستخدام Gemini Embedding الشغال ممتاز)
     fit = semantic_fit(candidate, job_description)
     fit_clamped = max(0.0, fit)
 
+    # 4. النتيجة النهائية
     final_score = (HARD_SKILL_WEIGHT * hard_skill_score) + (SEMANTIC_WEIGHT * fit_clamped)
 
     return RankingResult(

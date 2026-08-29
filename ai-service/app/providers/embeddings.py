@@ -9,6 +9,8 @@ from __future__ import annotations
 import hashlib
 from functools import lru_cache
 
+import httpx
+
 from config.settings import get_settings
 
 _CACHE: dict[str, list[float]] = {}
@@ -22,26 +24,46 @@ def _local_model():
     return SentenceTransformer(s.embedding_model, device=s.embedding_device)
 
 
-@lru_cache
-def _api_client():
-    from openai import OpenAI  # type: ignore[import-not-found]
-
+def _embed_uncached_api(texts: list[str]) -> list[list[float]]:
     s = get_settings()
     if not s.embedding_api_key:
         raise RuntimeError(
-            "EMBEDDING_API_KEY مش موجود في .env. لو بتستخدم Gemini حط فيه الـ API key "
-            "بتاعك من Google AI Studio."
+            "GEMINI_API_KEY مش موجود في .env. حط فيه الـ API key بتاعك من Google AI Studio."
         )
-    return OpenAI(api_key=s.embedding_api_key, base_url=s.embedding_api_base_url)
+
+    url = f"{s.embedding_api_base_url.rstrip('/')}/embeddings"
+    headers = {
+        "Authorization": f"Bearer {s.embedding_api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {"model": s.embedding_api_model, "input": texts}
+
+    with httpx.Client(timeout=30.0) as client:
+        try:
+            response = client.post(url, json=payload, headers=headers)
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            # مهم: نطبع body الرد نفسه - فيه رسالة الخطأ الحقيقية من Gemini
+            # (invalid key / invalid model / quota) اللي raise_for_status لوحدها بتبلعها.
+            raise RuntimeError(
+                f"Embedding API رجع {e.response.status_code}: {e.response.text}"
+            ) from e
+        data = response.json()
+
+    if "data" not in data:
+        raise ValueError(f"Unexpected response format from embedding API: {data}")
+
+    # لازم نرتب حسب "index" - الـ API OpenAI-compatible مش لازم يرجع النتائج
+    # بنفس ترتيب الإدخال في كل الحالات (خصوصًا في batch requests)، ولو معملناش
+    # sort هنا وحصل عدم تطابق، هيتخلط embedding CV مع embedding JD من غير أي error ظاهر.
+    ordered = sorted(data["data"], key=lambda d: d.get("index", 0))
+    return [d["embedding"] for d in ordered]
 
 
 def _embed_uncached(texts: list[str]) -> list[list[float]]:
     s = get_settings()
     if s.embedding_provider == "api":
-        resp = _api_client().embeddings.create(model=s.embedding_api_model, input=texts)
-        # الـ API بيرجع النتائج بنفس ترتيب الإدخال حسب field "index"
-        ordered = sorted(resp.data, key=lambda d: d.index)
-        return [d.embedding for d in ordered]
+        return _embed_uncached_api(texts)
     # local (زي ما كان بالظبط)
     return _local_model().encode(texts, normalize_embeddings=True).tolist()
 

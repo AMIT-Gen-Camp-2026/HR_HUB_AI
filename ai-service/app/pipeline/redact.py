@@ -32,3 +32,25 @@ def assert_clean(payload: str) -> None:
     for pattern in (NATIONAL_ID, EMAIL, PHONE):
         if pattern.search(payload):
             raise AssertionError(f"Identifier found in outbound payload: {pattern.pattern}")
+
+
+def extract_contact_info(text: str) -> dict[str, str | None]:
+    """Regex-extract email/phone straight from the CV text, before redact() runs.
+
+    These two fields are deterministic string patterns - there is no reason to send
+    them to a third-party model provider just to have the model echo them back into
+    personal_info.email / personal_info.phone. This lets the pipeline redact() the
+    text before it leaves the platform while still populating those two fields
+    reliably (run.py overwrites the model's own personal_info.email/phone with
+    these values - regex on the raw text is more trustworthy than an LLM re-reading
+    a string it was explicitly never shown).
+
+    Only returns the first match of each - a CV normally lists one primary email
+    and one primary phone number.
+    """
+    email_match = EMAIL.search(text)
+    phone_match = PHONE.search(text)
+    return {
+        "email": email_match.group(0) if email_match else None,
+        "phone": phone_match.group(0) if phone_match else None,
+    }

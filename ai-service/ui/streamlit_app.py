@@ -1,16 +1,32 @@
 import json
+import os
 
 import requests
 import streamlit as st
+from dotenv import load_dotenv
 
 
 # =========================
 # Configuration
 # =========================
 
+load_dotenv()  # يقرأ .env من نفس فولدر المشروع (لو موجود)
+
 BASE_URL = "http://127.0.0.1:5000"
 EXTRACT_URL = f"{BASE_URL}/api/v1/cv/extract"
 RANK_URL = f"{BASE_URL}/api/v1/rank"
+
+# نفس المتغير بالظبط اللي الـ Flask app (config/settings.py) بيقرأه، فمفيش
+# احتمال يبقى فيه اختلاف بين المفتاح اللي الـ backend متظبط عليه واللي
+# الـ UI بيبعته.
+ENV_API_KEY = os.getenv("AI_SERVICE_API_KEY", "")
+
+
+def get_active_api_key() -> str:
+    """المفتاح الفعلي المستخدم: override يدوي من الـ sidebar (لو موجود) وإلا
+    القيمة من .env. الـ override بيتخزن في session_state بس - مش بيتكتب
+    في أي ملف على الديسك."""
+    return st.session_state.get("api_key_override", "").strip() or ENV_API_KEY
 
 
 # =========================
@@ -19,125 +35,287 @@ RANK_URL = f"{BASE_URL}/api/v1/rank"
 
 st.set_page_config(
     page_title="AMIT Instructor Hub — CV Tools",
-    page_icon="📄",
+    page_icon="🧭",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 
 # =========================
-# Custom CSS
+# Custom CSS — design tokens
 # =========================
+# لوحة الألوان: navy-charcoal غامق (مش أسود خالص) + دهبي كإكسنت أساسي
+# (المرشح اللي "مستحق الاختيار") + تركواز للمطابق وكورال للناقص. الخط:
+# Space Grotesk للعناوين (شخصية هندسية واضحة)، Inter للنصوص، JetBrains Mono
+# للبيانات الخام.
 
 st.markdown(
     """
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+        --bg: #0B0F17;
+        --bg-glow: radial-gradient(circle at 15% 0%, rgba(232,163,61,0.10), transparent 45%),
+                   radial-gradient(circle at 85% 15%, rgba(47,212,165,0.08), transparent 40%);
+        --panel: #121826;
+        --panel-alt: #17202F;
+        --border: #262F42;
+        --border-hover: #3A4560;
+        --text: #E8ECF3;
+        --text-muted: #8993A8;
+        --gold: #8B5CF6;
+        --gold-soft: rgba(139,92,246,0.16);
+        --teal: #2FD4A5;
+        --teal-soft: rgba(47,212,165,0.12);
+        --coral: #FF6B6B;
+        --coral-soft: rgba(255,107,107,0.12);
+        --amber: #C084FC;
+    }
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
 
     .stApp {
-        background-color: #0e1117;
+        background-color: var(--bg);
+        background-image: var(--bg-glow);
+        color: var(--text);
     }
 
+    @keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scoreReveal {
+        from { opacity: 0; transform: scale(0.82); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        * { animation: none !important; transition: none !important; }
+    }
+
+    /* ---------- Masthead ---------- */
+    .eyebrow {
+        text-align: center;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--gold);
+        margin-top: 18px;
+        margin-bottom: 6px;
+    }
     .main-title {
         text-align: center;
-        font-size: 42px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 44px;
         font-weight: 700;
-        margin-top: 20px;
-        margin-bottom: 5px;
+        letter-spacing: -0.5px;
+        margin-bottom: 4px;
+        color: var(--text);
     }
-
     .subtitle {
         text-align: center;
-        color: #9ca3af;
-        font-size: 17px;
-        margin-bottom: 35px;
-    }
-
-    .section-title {
-        font-size: 24px;
-        font-weight: 600;
-        margin-top: 25px;
-        margin-bottom: 15px;
-    }
-
-    .info-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-    }
-
-    .info-label {
-        color: #8b949e;
-        font-size: 13px;
-        margin-bottom: 5px;
-    }
-
-    .info-value {
-        font-size: 17px;
-        font-weight: 500;
-    }
-
-    .skill {
-        display: inline-block;
-        background-color: #21262d;
-        border: 1px solid #30363d;
-        border-radius: 20px;
-        padding: 6px 12px;
-        margin: 4px;
-        font-size: 14px;
-    }
-
-    .skill-matched {
-        display: inline-block;
-        background-color: #0d2818;
-        border: 1px solid #2ea043;
-        color: #3fb950;
-        border-radius: 20px;
-        padding: 6px 12px;
-        margin: 4px;
-        font-size: 14px;
-    }
-
-    .skill-missing {
-        display: inline-block;
-        background-color: #2d1418;
-        border: 1px solid #f85149;
-        color: #ff7b72;
-        border-radius: 20px;
-        padding: 6px 12px;
-        margin: 4px;
-        font-size: 14px;
-    }
-
-    .experience-card {
-        background-color: #161b22;
-        border-left: 3px solid #58a6ff;
-        border-radius: 8px;
-        padding: 18px;
-        margin-bottom: 12px;
-    }
-
-    .score-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 30px;
-        text-align: center;
+        color: var(--text-muted);
+        font-size: 16px;
         margin-bottom: 20px;
     }
+    .masthead-divider {
+        height: 2px;
+        max-width: 220px;
+        margin: 0 auto 34px auto;
+        background: linear-gradient(90deg, transparent, var(--gold), var(--teal), transparent);
+        border-radius: 4px;
+    }
 
-    .score-value {
-        font-size: 56px;
+    /* ---------- Section titles ---------- */
+    .section-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 20px;
+        font-weight: 600;
+        margin-top: 22px;
+        margin-bottom: 14px;
+        color: var(--text);
+    }
+
+    /* ---------- Cards ---------- */
+    .info-card, .experience-card {
+        background-color: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        animation: fadeSlideUp 0.45s ease both;
+        transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .info-card:hover, .experience-card:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+    }
+    .experience-card {
+        border-left: 3px solid var(--teal);
+    }
+    .info-label {
+        color: var(--text-muted);
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .info-value {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text);
+    }
+
+    /* ---------- Skill pills ---------- */
+    .skill, .skill-matched, .skill-missing {
+        display: inline-block;
+        border-radius: 20px;
+        padding: 6px 14px;
+        margin: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        animation: fadeSlideUp 0.4s ease both;
+    }
+    .skill:hover, .skill-matched:hover, .skill-missing:hover {
+        transform: translateY(-2px) scale(1.04);
+    }
+    .skill {
+        background-color: var(--panel-alt);
+        border: 1px solid var(--border);
+        color: var(--text);
+    }
+    .skill-matched {
+        background-color: var(--teal-soft);
+        border: 1px solid var(--teal);
+        color: var(--teal);
+    }
+    .skill-matched:hover { box-shadow: 0 0 0 3px var(--teal-soft); }
+    .skill-missing {
+        background-color: var(--coral-soft);
+        border: 1px solid var(--coral);
+        color: var(--coral);
+    }
+    .skill-missing:hover { box-shadow: 0 0 0 3px var(--coral-soft); }
+
+    /* ---------- Score ring (signature element) ---------- */
+    .score-ring-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 34px 20px;
+        background-color: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        margin-bottom: 22px;
+        animation: scoreReveal 0.55s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    .score-ring {
+        width: 172px;
+        height: 172px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 6px;
+    }
+    .score-ring-inner {
+        width: 138px;
+        height: 138px;
+        border-radius: 50%;
+        background-color: var(--panel);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .score-ring-value {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 40px;
         font-weight: 700;
     }
-
-    .status {
-        text-align: center;
-        color: #8b949e;
-        margin-top: 10px;
+    .score-ring-label {
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-top: 2px;
     }
 
+    /* ---------- Status / connection badge ---------- */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background-color: var(--panel-alt);
+        color: var(--text-muted);
+    }
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+    .status-dot.on { background-color: var(--teal); box-shadow: 0 0 8px var(--teal); }
+    .status-dot.off { background-color: var(--coral); box-shadow: 0 0 8px var(--coral); }
+
+    .footer-status {
+        text-align: center;
+        color: var(--text-muted);
+        margin-top: 10px;
+        font-size: 13px;
+    }
+
+    /* ---------- Streamlit widget overrides ---------- */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        border-bottom: 1px solid var(--border);
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        color: var(--text-muted);
+        background-color: transparent;
+        border-radius: 10px 10px 0 0;
+        padding: 10px 18px;
+    }
+    .stTabs [aria-selected="true"] {
+        color: var(--gold) !important;
+        border-bottom: 2px solid var(--gold) !important;
+    }
+
+    .stButton > button {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        border-radius: 12px;
+        border: 1px solid var(--gold);
+        background: linear-gradient(135deg, var(--gold), var(--amber));
+        color: #F5F0FF;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px var(--gold-soft);
+    }
+
+    [data-testid="stFileUploader"], .stTextArea textarea, .stTextInput input {
+        background-color: var(--panel) !important;
+        border-radius: 12px !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+    }
+
+    pre, code {
+        font-family: 'JetBrains Mono', monospace !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -145,20 +323,47 @@ st.markdown(
 
 
 # =========================
+# Sidebar — connection / API key
+# =========================
+
+with st.sidebar:
+    st.markdown("#### الاتصال بالـ AI Service")
+
+    if ENV_API_KEY:
+        st.markdown(
+            '<div class="status-badge"><span class="status-dot on"></span>'
+            "المفتاح اتقرا من ملف .env</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div class="status-badge"><span class="status-dot off"></span>'
+            "مفيش AI_SERVICE_API_KEY في .env</div>",
+            unsafe_allow_html=True,
+        )
+
+    with st.expander("استخدام مفتاح مختلف مؤقتًا"):
+        override = st.text_input(
+            "X-API-Key (اختياري)",
+            type="password",
+            value=st.session_state.get("api_key_override", ""),
+            help="بيتخزن في الجلسة الحالية بس، مش بيتكتب في أي ملف. "
+            "سيبه فاضي عشان يستخدم القيمة من .env تلقائيًا.",
+        )
+        st.session_state["api_key_override"] = override
+
+
+# =========================
 # Header
 # =========================
 
+st.markdown('<div class="eyebrow">AMIT · Talent Intelligence</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">Instructor Hub — CV Tools</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="main-title">AMIT Instructor Hub — CV Tools</div>',
+    '<div class="subtitle">Extract CVs with AI, then rank them against a job description</div>',
     unsafe_allow_html=True,
 )
-
-st.markdown(
-    '<div class="subtitle">'
-    "Extract CVs with AI, then rank them against a job description"
-    "</div>",
-    unsafe_allow_html=True,
-)
+st.markdown('<div class="masthead-divider"></div>', unsafe_allow_html=True)
 
 
 # =========================
@@ -213,13 +418,18 @@ def display_value(value):
 
 def call_api(url, *, files=None, json_payload=None, timeout=300):
     """POST to the Flask API and return the response, or None on a
-    connection-level failure (already reported to the user via st.error)."""
+    connection-level failure (already reported to the user via st.error).
+    بيبعت X-API-Key تلقائيًا (من .env أو الـ override في الـ sidebar)."""
+
+    api_key = get_active_api_key()
+    headers = {"X-API-Key": api_key} if api_key else {}
 
     try:
         response = requests.post(
             url,
             files=files,
             json=json_payload,
+            headers=headers,
             timeout=timeout,
         )
         return response
@@ -247,9 +457,35 @@ def show_api_error(response):
     try:
         error_data = response.json()
         error_message = error_data.get("error", "Unknown API error.")
-        st.error(f"API Error: {error_message}")
+        if response.status_code == 401:
+            st.error(
+                f"API Error: {error_message} — تأكد إن AI_SERVICE_API_KEY متظبط "
+                "صح في .env أو في خانة الـ override بالـ sidebar."
+            )
+        else:
+            st.error(f"API Error: {error_message}")
     except ValueError:
         st.error(f"API returned status code {response.status_code}")
+
+
+def score_ring_html(score: float) -> str:
+    """SVG-free circular gauge built with a conic-gradient div — الـ
+    signature element بتاع صفحة الـ ranking."""
+
+    score = max(0.0, min(100.0, score))
+    color = "#2FD4A5" if score >= 70 else "#F2B84B" if score >= 40 else "#FF6B6B"
+    deg = score / 100 * 360
+
+    return f"""
+    <div class="score-ring-wrap">
+        <div class="score-ring" style="background: conic-gradient({color} {deg}deg, #1E2534 {deg}deg 360deg);">
+            <div class="score-ring-inner">
+                <div class="score-ring-value" style="color:{color}">{score:.1f}</div>
+                <div class="score-ring-label">Match Score</div>
+            </div>
+        </div>
+    </div>
+    """
 
 
 # =========================
@@ -648,15 +884,7 @@ with rank_tab:
         st.markdown("---")
 
         score = result.get("score", 0)
-        color = "#3fb950" if score >= 70 else "#d29922" if score >= 40 else "#f85149"
-
-        st.markdown(
-            '<div class="score-card">'
-            '<div class="info-label">Match Score</div>'
-            f'<div class="score-value" style="color:{color}">{score:.1f}</div>'
-            "</div>",
-            unsafe_allow_html=True,
-        )
+        st.markdown(score_ring_html(score), unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
 
@@ -686,9 +914,8 @@ with rank_tab:
 
 st.markdown("---")
 
+_key_status = "🟢 X-API-Key from .env" if ENV_API_KEY else "🔴 No X-API-Key configured"
 st.markdown(
-    '<div class="status">'
-    "AMIT Instructor Hub · Flask API · Extraction + Ranking"
-    "</div>",
+    f'<div class="footer-status">AMIT Instructor Hub · Flask API · Extraction + Ranking · {_key_status}</div>',
     unsafe_allow_html=True,
 )

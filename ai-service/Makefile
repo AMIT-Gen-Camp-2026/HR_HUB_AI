@@ -12,14 +12,17 @@ install:  ## Create the environment and install everything
 install-hf:  ## Add the Hugging Face extras (large — torch)
 	.venv/bin/pip install -e ".[hf]"
 
-run:  ## Start the API (PROVIDER=stub by default)
-	.venv/bin/uvicorn app.main:app --reload --port $${API_PORT:-8100}
+run:  ## Start the API (Flask dev server, reads FLASK_PORT from .env, default 5000)
+	.venv/bin/python -m app.main
+
+run-prod:  ## Start the API with gunicorn (used by Dockerfile too)
+	.venv/bin/gunicorn --bind 0.0.0.0:$${FLASK_PORT:-5000} --workers 2 --timeout 90 app.main:app
 
 ui:  ## Start the Streamlit tool
 	.venv/bin/streamlit run ui/streamlit_app.py
 
-test:  ## Run the test suite against the stub provider
-	PROVIDER=stub .venv/bin/pytest
+test:  ## Run the test suite (all mocked/deterministic - no network, no key needed)
+	.venv/bin/pytest
 
 lint:  ## Lint
 	.venv/bin/ruff check .

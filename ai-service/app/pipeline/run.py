@@ -24,6 +24,7 @@ from app.pipeline.postprocess import (
     extract_json_from_model_output,
     normalize_model_output,
 )
+from app.pipeline.redact import assert_clean, extract_contact_info, redact
 from app.prompts.registry import build_prompt
 from app.providers.hf_provider import query_model
 from app.schemas.cv import CVSchema
@@ -53,13 +54,43 @@ def parse_and_validate(raw_output: str) -> CVSchema:
 
 def clean_and_query(raw_text: str) -> CVSchema:
     """
-    بتاخد النص الخام، تنضفه، تبني الـ prompt عن طريق build_prompt() الثابتة،
-    وتستدعي hf_provider.query_model() مباشرة مع الـ validation + fallback
-    chain بتاعته.
+    بتاخد النص الخام، تنضفه، تشيل منه الـ PII (redact) قبل ما يتبنى منه أي prompt،
+    تبني الـ prompt عن طريق build_prompt() الثابتة، وتستدعي hf_provider.query_model()
+    مباشرة مع الـ validation + fallback chain بتاعته.
+
+    ملحوظة تصميم مهمة: email و phone بيتشالوا من النص المرسل للموديل (زي أي PII
+    تاني)، لكن schema الناتج لازم يفضل فيه القيمتين دول. الحل: بنستخرجهم بـ regex
+    من النص الأصلي *قبل* الـ redact (deterministic، مفيش داعي لموديل خارجي أصلاً)،
+    ونحطهم في الـ CVSchema الراجع بعد ما الموديل يرد - بدل ما نسيب الموديل يحاول
+    يقرا إيميل/تليفون هو أصلاً متبعتلوش.
 
     Raises:
         ModelInferenceError: فشل الاستدلال عبر كل الموديلات في MODEL_CHAIN.
     """
     cleaned_text = clean_cv_text(raw_text)
-    system_prompt, user_prompt = build_prompt(cleaned_text)
-    return query_model(system_prompt, user_prompt, validate_fn=parse_and_validate)
+
+    # لازم نستخرج الـ contact info قبل الـ redact - بعد الـ redact مفيش إيميل/تليفون
+    # حقيقي يتقرا خالص، هيبقوا استبدلوا بـ [EMAIL]/[PHONE].
+    contact_info = extract_contact_info(cleaned_text)
+
+    # نشيل PII (إيميل، تليفون، رقم قومي، أي رقم طويل) قبل ما النص يسيب المنصة
+    # لأي third-party model provider (HF Inference Providers).
+    redacted_text, _removed_count = redact(cleaned_text)
+
+    system_prompt, user_prompt = build_prompt(redacted_text)
+
+    # Safety net: لو أي identifier اتسرب رغم الـ redact() (bug في الـ regex نفسه
+    # أو حالة حافة مش متغطية)، نرفض نبعت الـ payload خالص بدل ما نكمل. ده نفس
+    # القاعدة الموصوفة في docstring app/pipeline/redact.py.
+    assert_clean(system_prompt + user_prompt)
+
+    cv = query_model(system_prompt, user_prompt, validate_fn=parse_and_validate)
+
+    # نفضّل القيمة اللي استخرجناها إحنا بالـ regex (أدق ومضمونة) فوق أي حاجة
+    # رجّعها الموديل - أصلاً الموديل مبقاش شايف الإيميل/التليفون الحقيقيين.
+    if contact_info["email"]:
+        cv.personal_info.email = contact_info["email"]
+    if contact_info["phone"]:
+        cv.personal_info.phone = contact_info["phone"]
+
+    return cv

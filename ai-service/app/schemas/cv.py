@@ -4,11 +4,9 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class StrictModel(BaseModel):
     """
-    Base class مشتركة لكل الـ sub-models. أي حقل زيادة (زي 'position' بدل
-    'job_title') هيتم رفضه صراحة بدل ما يتشال بصمت (extra='ignore' هو
-    الافتراضي في Pydantic لو معملناش override ليه).
+    يتجاهل أي حقول زيادة راجعة من الـ LLM بصمت لتجنب الـ Validation Error.
     """
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
 
 class PersonalInfo(StrictModel):
@@ -51,11 +49,6 @@ class CVSchema(StrictModel):
 
 
 EMPTY_CV_SCHEMA: dict = CVSchema().model_dump()
-
-
-# ============================================================
-# --- إضافة Sprint 2 (CV-JD Ranking) ---
-# ============================================================
 
 
 class JobDescription(StrictModel):

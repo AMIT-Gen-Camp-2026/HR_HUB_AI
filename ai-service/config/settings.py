@@ -12,6 +12,15 @@ load_dotenv()
 
 
 class Config:
+    
+    # ============================================================
+    # Service-to-service auth (app/security/auth.py)
+    # ============================================================
+    # ثابت بين الـ ai-service وأي حد بيناديه (غالبًا الـ full-stack backend).
+    # لو سايبه فاضي، الـ endpoints بتفضل شغالة من غير حماية - مقبول للتطوير
+    # المحلي بس، خطر لو السيرفر متاح لغير جهازك.
+    AI_SERVICE_API_KEY: str = os.getenv("AI_SERVICE_API_KEY", "")
+    
     # ============================================================
     # Hugging Face
     # ============================================================
@@ -104,7 +113,7 @@ class Settings(BaseSettings):
         default="https://generativelanguage.googleapis.com/v1beta/openai/",
         alias="EMBEDDING_API_BASE_URL",
     )
-    embedding_api_key: str = Field(default="", alias="EMBEDDING_API_KEY")
+    embedding_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     embedding_api_model: str = Field(default="gemini-embedding-001", alias="EMBEDDING_API_MODEL")
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
