@@ -18,8 +18,12 @@ from app.pipeline import ranking
 def client(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(ranking, "semantic_fit", lambda cv, jd: 0.5)
     monkeypatch.setattr(main.config, "RANKING_ENABLED", True)
+    # هذا الملف بيختبر منطق الـ ranking نفسه (status codes, validation, kill
+    # switch) - الـ auth ليها اختبارات مخصصة في tests/integration/test_auth.py.
+    # بنفضّي المفتاح هنا عشان الاختبارات دي تفضل شغالة بغض النظر عن قيمة
+    # AI_SERVICE_API_KEY الحقيقية في .env بتاع المطوّر.
+    monkeypatch.setattr(main.config, "AI_SERVICE_API_KEY", "")
     return main.app.test_client()
-
 
 def _payload() -> dict:
     return {
