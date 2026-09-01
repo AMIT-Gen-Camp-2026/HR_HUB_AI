@@ -171,7 +171,14 @@ single-worker deployment.
 
 ---
 
-## *(next entry)*
+## 2026-08-31 — Merged extraction and ranking into a single route
+
+**Decision.** `POST /api/v1/cv/evaluate` replaced the old two-step flow (`/api/v1/cv/extract` + `/api/v1/rank`) with one multipart request carrying the CV file and a JSON-string `job_description` field. The route extracts the CV, validates it, then optionally ranks it in the same response; when `RANKING_ENABLED` is off, extraction still succeeds and the `ranking` field is `null` instead of failing the request.
+
+**Reason.** A single round-trip is cheaper and simpler for the full-stack client: one file upload and one server round-trip instead of extract, then re-POST the result to rank. This reduces latency, avoids a redundant payload round-trip, and keeps the orchestration logic in the route layer only — the underlying extraction and scoring functions are untouched.
+
+**Rejected / deferred.** We did not keep the old endpoints as backward-compatible aliases. The split contract was removed outright because the new merged route is the only supported API and the task explicitly required replacing the old route contract rather than maintaining two versions in parallel.
+
 ---
 
 ## 2026-08-29 — Minimal API key auth before integration, not after

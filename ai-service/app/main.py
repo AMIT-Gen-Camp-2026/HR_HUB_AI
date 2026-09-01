@@ -6,6 +6,7 @@ app/main.py
 خلف endpoints بسيطة.
 """
 
+import json
 import logging
 import os
 
@@ -48,17 +49,33 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 
-@app.route("/api/v1/cv/extract", methods=["POST"])
+@app.route("/api/v1/cv/evaluate", methods=["POST"])
 @require_api_key
 @limiter.limit("10 per hour")
-def extract_cv():
+def evaluate_cv():
     if "file" not in request.files:
         return jsonify({"success": False, "error": "No 'file' field in form-data."}), 400
 
     file = request.files["file"]
-
     if file.filename == "":
         return jsonify({"success": False, "error": "No file selected."}), 400
+
+    job_description_raw = request.form.get("job_description")
+    if job_description_raw is None:
+        return jsonify({"success": False, "error": "Missing 'job_description' field in form-data."}), 400
+
+    try:
+        job_description_payload = json.loads(job_description_raw)
+    except json.JSONDecodeError:
+        return jsonify({"success": False, "error": "job_description must be valid JSON."}), 400
+
+    if not isinstance(job_description_payload, dict):
+        return jsonify({"success": False, "error": "job_description must be a JSON object."}), 400
+
+    try:
+        job_description = JobDescription(**job_description_payload)
+    except PydanticValidationError as e:
+        return jsonify({"success": False, "error": e.errors()}), 422
 
     try:
         ext = validate_extension(file.filename, config.ALLOWED_EXTENSIONS)
@@ -71,7 +88,6 @@ def extract_cv():
     try:
         file.save(temp_path)
 
-        # تحقق من المحتوى الحقيقي للملف (magic bytes)، مش بس امتداده
         try:
             validate_file_content(temp_path, ext)
         except FileValidationError as e:
@@ -81,9 +97,6 @@ def extract_cv():
         if not raw_text or not raw_text.strip():
             return jsonify({"success": False, "error": "No extractable text found in file."}), 422
 
-        # clean_and_query دلوقتي بيتحقق من كل محاولة (parse_and_validate جوه
-        # app/pipeline/run.py). لو موديل رجّع JSON تالف أو مش مطابق للـ schema،
-        # هيتحسب فشل وهننتقل للموديل اللي بعده في MODEL_CHAIN تلقائيًا.
         try:
             validated_cv = clean_and_query(raw_text)
         except ModelInferenceError as e:
@@ -92,47 +105,26 @@ def extract_cv():
                 {"success": False, "error": "Model inference failed. Please try again."}
             ), 502
 
-        return jsonify({"success": True, "cv": validated_cv.model_dump()}), 200
+        if not config.RANKING_ENABLED:
+            return jsonify({"success": True, "cv": validated_cv.model_dump(), "ranking": None}), 200
 
-    except Exception as e:
-        logger.exception("Unexpected error during extraction")
+        try:
+            ranking_result = compute_ranking(validated_cv, job_description)
+        except Exception:
+            logger.exception("Unexpected error during ranking")
+            return jsonify({"success": False, "error": "Internal server error."}), 500
+
+        return jsonify(
+            {"success": True, "cv": validated_cv.model_dump(), "ranking": ranking_result.model_dump()}
+        ), 200
+
+    except Exception:
+        logger.exception("Unexpected error during CV evaluation")
         return jsonify({"success": False, "error": "Internal server error."}), 500
 
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
-
-
-@app.route("/api/v1/rank", methods=["POST"])
-@require_api_key
-@limiter.limit("60 per hour")
-def rank_candidate():
-    """
-    بتاخد {"candidate": <CVSchema JSON>, "job_description": <JobDescription JSON>}
-    وترجّع RankingResult. الـ candidate عادة هو ناتج /api/v1/cv/extract زي
-    ما هو (validated_cv.model_dump()) - مفيش استخراج إضافي هنا، الـ scoring
-    كله deterministic (algorithm، مش LLM call) في app/pipeline/ranking.py.
-    """
-    if not config.RANKING_ENABLED:
-        return jsonify({"success": False, "error": "Ranking is switched off."}), 200
-
-    payload = request.get_json(silent=True)
-    if payload is None or not isinstance(payload, dict):
-        return jsonify({"success": False, "error": "Request body must be a JSON object."}), 400
-
-    try:
-        candidate = CVSchema(**payload.get("candidate", {}))
-        job_description = JobDescription(**payload.get("job_description", {}))
-    except PydanticValidationError as e:
-        return jsonify({"success": False, "error": e.errors()}), 422
-
-    try:
-        result = compute_ranking(candidate, job_description)
-    except Exception:
-        logger.exception("Unexpected error during ranking")
-        return jsonify({"success": False, "error": "Internal server error."}), 500
-
-    return jsonify({"success": True, "result": result.model_dump()}), 200
 
 
 if __name__ == "__main__":

@@ -13,8 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()  # يقرأ .env من نفس فولدر المشروع (لو موجود)
 
 BASE_URL = "http://127.0.0.1:5000"
-EXTRACT_URL = f"{BASE_URL}/api/v1/cv/extract"
-RANK_URL = f"{BASE_URL}/api/v1/rank"
+EVALUATE_URL = f"{BASE_URL}/api/v1/cv/evaluate"
 
 # نفس المتغير بالظبط اللي الـ Flask app (config/settings.py) بيقرأه، فمفيش
 # احتمال يبقى فيه اختلاف بين المفتاح اللي الـ backend متظبط عليه واللي
@@ -489,20 +488,20 @@ def score_ring_html(score: float) -> str:
 
 
 # =========================
-# Tabs — Extract / Rank
+# Tabs — Evaluate CV
 # =========================
 
-extract_tab, rank_tab = st.tabs(["📄 Extract CV", "🎯 Rank Candidate"])
+evaluate_tab = st.tabs(["📄 Evaluate CV"])[0]
 
 
 # ============================================================
-# TAB 1 — Extract CV  (POST /api/v1/cv/extract)
+# TAB — Evaluate CV  (POST /api/v1/cv/evaluate)
 # ============================================================
 
-with extract_tab:
+with evaluate_tab:
 
     st.markdown(
-        '<div class="section-title">Upload your CV</div>',
+        '<div class="section-title">Upload your CV and job description</div>',
         unsafe_allow_html=True,
     )
 
@@ -517,51 +516,78 @@ with extract_tab:
         file_size_mb = uploaded_file.size / (1024 * 1024)
         st.caption(f"File size: {file_size_mb:.2f} MB")
 
-    extract_button = st.button(
-        "Extract CV",
+    jd_title = st.text_input("Job title", value="Data Analyst")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        required_skills_text = st.text_area(
+            "Required skills (one per line)",
+            value="Python\nSQL\nPower BI",
+            height=120,
+        )
+    with col2:
+        nice_to_have_text = st.text_area(
+            "Nice-to-have skills (one per line)",
+            value="Tableau",
+            height=120,
+        )
+
+    min_experience_years = st.number_input(
+        "Minimum experience (years) — optional",
+        min_value=0,
+        max_value=40,
+        value=0,
+        step=1,
+        help="Leave at 0 to skip this requirement.",
+    )
+
+    evaluate_button = st.button(
+        "Evaluate CV",
         type="primary",
         use_container_width=True,
     )
 
-    if extract_button:
+    if evaluate_button:
 
         if uploaded_file is None:
             st.warning("Please upload a PDF or DOCX CV first.")
-
         else:
+            job_description = {
+                "title": jd_title,
+                "required_skills": [s.strip() for s in required_skills_text.splitlines() if s.strip()],
+                "nice_to_have_skills": [s.strip() for s in nice_to_have_text.splitlines() if s.strip()],
+            }
+            if min_experience_years > 0:
+                job_description["min_experience_years"] = int(min_experience_years)
+
             files = {
                 "file": (
                     uploaded_file.name,
                     uploaded_file.getvalue(),
                     uploaded_file.type,
-                )
+                ),
+                "job_description": (None, json.dumps(job_description), "application/json"),
             }
 
-            with st.spinner("Extracting CV information using the AI model..."):
-                response = call_api(EXTRACT_URL, files=files)
+            with st.spinner("Extracting CV and scoring it against the job description..."):
+                response = call_api(EVALUATE_URL, files=files)
 
             if response is not None:
-
                 if response.status_code == 200:
                     try:
                         result = response.json()
-                        # الـ candidate اللي هتستخدمه Tab الـ Ranking - نفس
-                        # الـ CVSchema بالظبط (result["cv"]), من غير أي تعديل.
-                        st.session_state["cv_result"] = result
+                        st.session_state["evaluate_result"] = result
                         st.session_state["uploaded_file_name"] = uploaded_file.name
-                        st.success("CV extraction completed successfully.")
+                        st.success("CV evaluation completed successfully.")
                     except ValueError:
                         st.error("The API returned an invalid JSON response.")
                 else:
                     show_api_error(response)
 
-    # ---------------------------------
-    # Display Result
-    # ---------------------------------
-
-    if "cv_result" in st.session_state:
-
-        cv = st.session_state["cv_result"].get("cv", {})
+    if "evaluate_result" in st.session_state:
+        payload = st.session_state["evaluate_result"]
+        cv = payload.get("cv", {})
+        ranking_result = payload.get("ranking")
         personal = cv.get("personal_info") or {}
 
         st.markdown("---")
@@ -573,8 +599,6 @@ with extract_tab:
         info_tab, raw_tab = st.tabs(["Extracted Information", "Raw JSON"])
 
         with info_tab:
-
-            # --- Personal Information ---
             st.markdown(
                 '<div class="section-title">Personal Information</div>',
                 unsafe_allow_html=True,
@@ -616,25 +640,6 @@ with extract_tab:
                     unsafe_allow_html=True,
                 )
 
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown(
-                    '<div class="info-card">'
-                    '<div class="info-label">LinkedIn</div>'
-                    f'<div class="info-value">{safe_value(personal.get("linkedin"))}</div>'
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
-            with col2:
-                st.markdown(
-                    '<div class="info-card">'
-                    '<div class="info-label">GitHub</div>'
-                    f'<div class="info-value">{safe_value(personal.get("github"))}</div>'
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
-
-            # --- Skills (explicit + inferred are separate fields in CVSchema) ---
             st.markdown('<div class="section-title">Skills (explicit)</div>', unsafe_allow_html=True)
             st.markdown('<div class="info-card">', unsafe_allow_html=True)
             display_list(cv.get("skills"))
@@ -647,265 +652,67 @@ with extract_tab:
                 display_list(inferred_skills)
                 st.markdown("</div>", unsafe_allow_html=True)
 
-            # --- Experience ---
             experience = cv.get("experience")
             st.markdown('<div class="section-title">Experience</div>', unsafe_allow_html=True)
-
             if experience:
                 for job in experience:
                     if isinstance(job, dict):
-                        title = safe_value(job.get("job_title"))
-                        company = safe_value(job.get("company"))
-                        start_date = safe_value(job.get("start_date"))
-                        end_date = safe_value(job.get("end_date"))
-
                         st.markdown(
                             '<div class="experience-card">'
-                            f"<strong>{title}</strong><br>"
-                            f"{company}<br>"
-                            f"{start_date} - {end_date}"
+                            f"<strong>{safe_value(job.get('job_title'))}</strong><br>"
+                            f"{safe_value(job.get('company'))}<br>"
+                            f"{safe_value(job.get('start_date'))} - {safe_value(job.get('end_date'))}"
                             "</div>",
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown(
-                            f'<div class="experience-card">{job}</div>',
                             unsafe_allow_html=True,
                         )
             else:
                 st.write("Not provided")
-
-            # --- Education ---
-            education = cv.get("education")
-            st.markdown('<div class="section-title">Education</div>', unsafe_allow_html=True)
-
-            if education:
-                for item in education:
-                    if isinstance(item, dict):
-                        degree = safe_value(item.get("degree"))
-                        institution = safe_value(item.get("institution"))
-                        year = safe_value(item.get("graduation_year"))
-
-                        st.markdown(
-                            '<div class="experience-card">'
-                            f"<strong>{degree}</strong><br>"
-                            f"{institution}<br>"
-                            f"{year}"
-                            "</div>",
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown(
-                            f'<div class="experience-card">{item}</div>',
-                            unsafe_allow_html=True,
-                        )
-            else:
-                st.write("Not provided")
-
-            # --- Projects ---
-            projects = cv.get("projects")
-            if projects:
-                st.markdown('<div class="section-title">Projects</div>', unsafe_allow_html=True)
-
-                for project in projects:
-                    if isinstance(project, dict):
-                        name = safe_value(project.get("name"))
-                        description = safe_value(project.get("description"))
-                        technologies = project.get("technologies_mentioned")
-
-                        st.markdown(
-                            '<div class="experience-card">'
-                            f"<strong>{name}</strong><br><br>"
-                            f"{description}"
-                            "</div>",
-                            unsafe_allow_html=True,
-                        )
-
-                        if technologies:
-                            st.write("Technologies")
-                            display_list(technologies)
-                    else:
-                        st.markdown(
-                            f'<div class="experience-card">{project}</div>',
-                            unsafe_allow_html=True,
-                        )
-
-            # --- Certifications / Languages ---
-            col1, col2 = st.columns(2)
-
-            with col1:
-                certifications = cv.get("certifications")
-                if certifications:
-                    st.markdown('<div class="section-title">Certifications</div>', unsafe_allow_html=True)
-                    st.markdown('<div class="info-card">', unsafe_allow_html=True)
-                    display_list(certifications)
-                    st.markdown("</div>", unsafe_allow_html=True)
-
-            with col2:
-                languages = cv.get("languages")
-                if languages:
-                    st.markdown('<div class="section-title">Languages</div>', unsafe_allow_html=True)
-                    st.markdown('<div class="info-card">', unsafe_allow_html=True)
-                    display_list(languages)
-                    st.markdown("</div>", unsafe_allow_html=True)
 
         with raw_tab:
-            st.markdown('<div class="section-title">Raw Model Output</div>', unsafe_allow_html=True)
             st.json(cv)
             st.download_button(
-                label="Download JSON",
+                label="Download extracted CV JSON",
                 data=json.dumps(cv, ensure_ascii=False, indent=2),
                 file_name="extracted_cv.json",
                 mime="application/json",
                 use_container_width=True,
             )
 
-
-# ============================================================
-# TAB 2 — Rank Candidate  (POST /api/v1/rank)
-# ============================================================
-
-with rank_tab:
-
-    st.markdown(
-        '<div class="section-title">Candidate</div>',
-        unsafe_allow_html=True,
-    )
-
-    has_extracted_cv = "cv_result" in st.session_state
-
-    if has_extracted_cv:
-        source_label = f'CV extracted in the other tab ("{st.session_state.get("uploaded_file_name", "uploaded file")}")'
-        candidate_source = st.radio(
-            "Which candidate do you want to rank?",
-            options=["Use the extracted CV", "Paste a CVSchema JSON manually"],
-            horizontal=True,
-        )
-    else:
-        st.info(
-            "No CV extracted yet in this session. Extract one in the "
-            '"Extract CV" tab first, or paste a candidate JSON below.'
-        )
-        candidate_source = "Paste a CVSchema JSON manually"
-
-    candidate_payload = None
-
-    if candidate_source == "Use the extracted CV":
-        candidate_payload = st.session_state["cv_result"]["cv"]
-        st.caption(source_label)
-        with st.expander("Preview candidate JSON"):
-            st.json(candidate_payload)
-
-    else:
-        default_candidate = json.dumps(
-            {"skills": ["Python", "SQL"], "inferred_skills": ["Pandas"]},
-            indent=2,
-        )
-        candidate_json_text = st.text_area(
-            "Candidate JSON (matches CVSchema — at minimum needs `skills`)",
-            value=default_candidate,
-            height=160,
-        )
-        try:
-            candidate_payload = json.loads(candidate_json_text)
-        except json.JSONDecodeError as e:
-            st.error(f"Invalid JSON: {e}")
-
-    st.markdown(
-        '<div class="section-title">Job Description</div>',
-        unsafe_allow_html=True,
-    )
-
-    jd_title = st.text_input("Job title", value="Data Analyst")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        required_skills_text = st.text_area(
-            "Required skills (one per line)",
-            value="Python\nSQL\nPower BI",
-            height=120,
-        )
-    with col2:
-        nice_to_have_text = st.text_area(
-            "Nice-to-have skills (one per line)",
-            value="Tableau",
-            height=120,
-        )
-
-    min_experience_years = st.number_input(
-        "Minimum experience (years) — optional",
-        min_value=0,
-        max_value=40,
-        value=0,
-        step=1,
-        help="Leave at 0 to skip this requirement.",
-    )
-
-    rank_button = st.button("Rank Candidate", type="primary", use_container_width=True)
-
-    if rank_button:
-
-        if candidate_payload is None:
-            st.warning("Fix the candidate JSON above first.")
-
-        else:
-            job_description = {
-                "title": jd_title,
-                "required_skills": [s.strip() for s in required_skills_text.splitlines() if s.strip()],
-                "nice_to_have_skills": [s.strip() for s in nice_to_have_text.splitlines() if s.strip()],
-            }
-            if min_experience_years > 0:
-                job_description["min_experience_years"] = int(min_experience_years)
-
-            payload = {"candidate": candidate_payload, "job_description": job_description}
-
-            with st.spinner("Scoring candidate against the job description..."):
-                response = call_api(RANK_URL, json_payload=payload)
-
-            if response is not None:
-                if response.status_code == 200:
-                    body = response.json()
-                    if body.get("success"):
-                        st.session_state["rank_result"] = body["result"]
-                    else:
-                        st.warning(body.get("error", "Ranking is switched off."))
-                        st.session_state.pop("rank_result", None)
-                else:
-                    show_api_error(response)
-
-    # ---------------------------------
-    # Display Result
-    # ---------------------------------
-
-    if "rank_result" in st.session_state:
-
-        result = st.session_state["rank_result"]
-
         st.markdown("---")
+        st.markdown(
+            '<div class="section-title">Ranking Result</div>',
+            unsafe_allow_html=True,
+        )
 
-        score = result.get("score", 0)
-        st.markdown(score_ring_html(score), unsafe_allow_html=True)
+        if ranking_result is None:
+            st.info("Ranking is disabled for this deployment; extraction completed successfully.")
+        else:
+            score = ranking_result.get("score", 0)
+            st.markdown(score_ring_html(score), unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown('<div class="section-title">Matched Skills</div>', unsafe_allow_html=True)
+                st.markdown('<div class="info-card">', unsafe_allow_html=True)
+                display_list(ranking_result.get("matched_skills"), css_class="skill-matched")
+                st.markdown("</div>", unsafe_allow_html=True)
+            with col2:
+                st.markdown('<div class="section-title">Missing Skills</div>', unsafe_allow_html=True)
+                st.markdown('<div class="info-card">', unsafe_allow_html=True)
+                display_list(ranking_result.get("missing_skills"), css_class="skill-missing")
+                st.markdown("</div>", unsafe_allow_html=True)
+            semantic_fit = ranking_result.get("semantic_fit")
+            if semantic_fit is not None:
+                st.caption(f"Semantic fit (embedding similarity): {semantic_fit:.2f}")
+            with st.expander("Score breakdown"):
+                st.json(ranking_result.get("breakdown", {}))
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown('<div class="section-title">Matched Skills</div>', unsafe_allow_html=True)
-            st.markdown('<div class="info-card">', unsafe_allow_html=True)
-            display_list(result.get("matched_skills"), css_class="skill-matched")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        with col2:
-            st.markdown('<div class="section-title">Missing Skills</div>', unsafe_allow_html=True)
-            st.markdown('<div class="info-card">', unsafe_allow_html=True)
-            display_list(result.get("missing_skills"), css_class="skill-missing")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        semantic_fit = result.get("semantic_fit")
-        if semantic_fit is not None:
-            st.caption(f"Semantic fit (embedding similarity): {semantic_fit:.2f}")
-
-        with st.expander("Score breakdown"):
-            st.json(result.get("breakdown", {}))
+            st.download_button(
+                label="Download ranking JSON",
+                data=json.dumps(ranking_result, ensure_ascii=False, indent=2),
+                file_name="ranking_result.json",
+                mime="application/json",
+                use_container_width=True,
+            )
 
 
 # =========================

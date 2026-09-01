@@ -24,7 +24,7 @@ Nothing in this service writes to an instructor record. Every output is a **draf
 
 ## What's actually running
 
-One Flask app, two endpoints, one extraction provider, a choice of two embedding providers.
+One Flask app, one merged evaluation endpoint, one extraction provider, a choice of two embedding providers.
 
 | Piece                                             | What it is                                                                                                                             |
 | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,7 +66,7 @@ docker compose up --build     # ai-service on :5000, ui on :8501
 ```text
 ai-service/
 ├── app/
-│   ├── main.py                         Flask app - the only HTTP entry point (2 routes)
+│   ├── main.py                         Flask app - the only HTTP entry point (1 merged route)
 │   ├── pipeline/                       extract → normalize → redact → prompt → model → validate
 │   ├── prompts/                        one hand-written system prompt (registry.py)
 │   ├── providers/                      hf_provider.py (extraction) + embeddings.py (local | api)

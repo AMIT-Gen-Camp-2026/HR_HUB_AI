@@ -4,6 +4,8 @@
 """
 from __future__ import annotations
 
+import io
+
 import pytest
 
 from app import main
@@ -20,27 +22,37 @@ def client_with_key(monkeypatch: pytest.MonkeyPatch):
 
 def _payload() -> dict:
     return {
-        "candidate": {"skills": ["Python", "SQL"]},
-        "job_description": {"title": "Data Analyst", "required_skills": ["Python"]},
+        "file": (io.BytesIO(b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"), "candidate.pdf", "application/pdf"),
+        "job_description": '{"title": "Data Analyst", "required_skills": ["Python"]}',
     }
 
 
 def test_rejects_request_with_no_key(client_with_key) -> None:
-    response = client_with_key.post("/api/v1/rank", json=_payload())
+    response = client_with_key.post("/api/v1/cv/evaluate", data=_payload(), content_type="multipart/form-data")
     assert response.status_code == 401
     assert response.get_json()["success"] is False
 
 
 def test_rejects_request_with_wrong_key(client_with_key) -> None:
     response = client_with_key.post(
-        "/api/v1/rank", json=_payload(), headers={"X-API-Key": "wrong-key"}
+        "/api/v1/cv/evaluate",
+        data=_payload(),
+        content_type="multipart/form-data",
+        headers={"X-API-Key": "wrong-key"},
     )
     assert response.status_code == 401
 
 
-def test_accepts_request_with_correct_key(client_with_key) -> None:
+def test_accepts_request_with_correct_key(client_with_key, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(main, "clean_and_query", lambda raw_text: main.CVSchema(skills=["Python"], personal_info={"name": "Jane Doe"}))
+    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: ranking.rank(candidate, job_description))
+
     response = client_with_key.post(
-        "/api/v1/rank", json=_payload(), headers={"X-API-Key": "test-secret-key"}
+        "/api/v1/cv/evaluate",
+        data=_payload(),
+        content_type="multipart/form-data",
+        headers={"X-API-Key": "test-secret-key"},
     )
     assert response.status_code == 200
     assert response.get_json()["success"] is True
@@ -61,6 +73,13 @@ def test_endpoint_open_when_key_not_configured(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(ranking, "semantic_fit", lambda cv, jd: 0.5)
     monkeypatch.setattr(main.config, "RANKING_ENABLED", True)
     client = main.app.test_client()
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(main, "clean_and_query", lambda raw_text: main.CVSchema(skills=["Python"], personal_info={"name": "Jane Doe"}))
+    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: ranking.rank(candidate, job_description))
 
-    response = client.post("/api/v1/rank", json=_payload())
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data=_payload(),
+        content_type="multipart/form-data",
+    )
     assert response.status_code == 200

@@ -1,74 +1,120 @@
-"""End-to-end test for the Flask /api/v1/rank endpoint (app/main.py).
+"""End-to-end test for the merged CV extraction + ranking endpoint.
 
-semantic_fit() is monkeypatched here for the same reason as
-tests/unit/test_ranking.py: no network / no real embeddings model load in
-CI. This file's job is to check the HTTP wiring (status codes, JSON body,
-validation errors, the kill switch) - scoring correctness itself is
-already covered by test_ranking.py.
+The underlying ranking logic is checked in the unit tests; this suite covers
+HTTP wiring, validation, the kill switch, and the single-call flow.
 """
 from __future__ import annotations
+
+import io
+import json
 
 import pytest
 
 from app import main
 from app.pipeline import ranking
+from app.schemas.cv import CVSchema
 
 
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(ranking, "semantic_fit", lambda cv, jd: 0.5)
     monkeypatch.setattr(main.config, "RANKING_ENABLED", True)
-    # هذا الملف بيختبر منطق الـ ranking نفسه (status codes, validation, kill
-    # switch) - الـ auth ليها اختبارات مخصصة في tests/integration/test_auth.py.
-    # بنفضّي المفتاح هنا عشان الاختبارات دي تفضل شغالة بغض النظر عن قيمة
-    # AI_SERVICE_API_KEY الحقيقية في .env بتاع المطوّر.
     monkeypatch.setattr(main.config, "AI_SERVICE_API_KEY", "")
     return main.app.test_client()
 
-def _payload() -> dict:
+
+def _job_description() -> dict:
     return {
-        "candidate": {"skills": ["Python", "SQL"]},
-        "job_description": {
-            "title": "Data Analyst",
-            "required_skills": ["Python", "SQL", "Tableau"],
-        },
+        "title": "Data Analyst",
+        "required_skills": ["Python", "SQL", "Tableau"],
     }
 
 
-def test_rank_returns_result_for_valid_payload(client) -> None:
-    response = client.post("/api/v1/rank", json=_payload())
+def _multipart_data(file_bytes: bytes | None = None, job_description: dict | None = None):
+    file_bytes = file_bytes or b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"
+    job_description = job_description or _job_description()
+    return {
+        "file": (io.BytesIO(file_bytes), "candidate.pdf", "application/pdf"),
+        "job_description": json.dumps(job_description),
+    }
+
+
+def test_evaluate_returns_cv_and_ranking_for_valid_payload(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(
+        main,
+        "clean_and_query",
+        lambda raw_text: CVSchema(
+            skills=["Python", "SQL"],
+            inferred_skills=["Pandas"],
+            personal_info={"name": "Jane Doe"},
+        ),
+    )
+    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: ranking.rank(candidate, job_description))
+
+    response = client.post("/api/v1/cv/evaluate", data=_multipart_data(), content_type="multipart/form-data")
 
     assert response.status_code == 200
     body = response.get_json()
     assert body["success"] is True
-    assert body["result"]["matched_skills"] == ["Python", "SQL"]
-    assert body["result"]["missing_skills"] == ["Tableau"]
-    assert 0.0 < body["result"]["score"] < 100.0
+    assert body["cv"]["skills"] == ["Python", "SQL"]
+    assert body["ranking"]["matched_skills"] == ["Python", "SQL"]
+    assert body["ranking"]["missing_skills"] == ["Tableau"]
+    assert 0.0 < body["ranking"]["score"] < 100.0
 
 
-def test_rank_rejects_non_json_body(client) -> None:
-    response = client.post("/api/v1/rank", data="not json", content_type="text/plain")
+def test_evaluate_rejects_missing_job_description(client) -> None:
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data={"file": (io.BytesIO(b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"), "candidate.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
 
     assert response.status_code == 400
     assert response.get_json()["success"] is False
 
 
-def test_rank_rejects_invalid_job_description(client) -> None:
-    payload = _payload()
-    del payload["job_description"]["title"]  # title is required in JobDescription
-
-    response = client.post("/api/v1/rank", json=payload)
+def test_evaluate_rejects_invalid_job_description_payload(client) -> None:
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data={
+            "file": (io.BytesIO(b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"), "candidate.pdf", "application/pdf"),
+            "job_description": '{"required_skills": ["Python"]}',
+        },
+        content_type="multipart/form-data",
+    )
 
     assert response.status_code == 422
     assert response.get_json()["success"] is False
 
 
-def test_rank_respects_kill_switch(client, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_evaluate_rejects_invalid_file(client) -> None:
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data={
+            "file": (io.BytesIO(b"not a real pdf"), "candidate.txt", "text/plain"),
+            "job_description": json.dumps(_job_description()),
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["success"] is False
+
+
+def test_evaluate_respects_kill_switch(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(
+        main,
+        "clean_and_query",
+        lambda raw_text: CVSchema(skills=["Python"], personal_info={"name": "Jane Doe"}),
+    )
     monkeypatch.setattr(main.config, "RANKING_ENABLED", False)
 
-    response = client.post("/api/v1/rank", json=_payload())
+    response = client.post("/api/v1/cv/evaluate", data=_multipart_data(), content_type="multipart/form-data")
 
     assert response.status_code == 200
     body = response.get_json()
-    assert body["success"] is False
-    assert "switched off" in body["error"]
+    assert body["success"] is True
+    assert body["ranking"] is None
+    assert body["cv"]["skills"] == ["Python"]

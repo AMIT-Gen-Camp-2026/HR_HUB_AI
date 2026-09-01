@@ -15,13 +15,20 @@
    (see `tests/integration/test_rank_endpoint.py::test_rank_respects_kill_switch`).
    Extraction has no kill switch yet — a real gap, not a documented one.
 
-## The two request paths that actually exist
+## The request path that actually exists
 
-### 1. CV extraction — `POST /api/v1/cv/extract`
+### Unified evaluation — `POST /api/v1/cv/evaluate`
+
+This is a single round-trip: the client sends the CV file and the job description together,
+then the service extracts the CV and optionally ranks it in the same request.
 
 Flask route (app/main.py)
 
 ```text
+│
+├─ file required in multipart/form-data
+│
+├─ job_description required as form field containing JSON string
 │
 ├─ validate_extension()          .pdf / .docx only, by filename
 │
@@ -52,43 +59,21 @@ clean_and_query()  — app/pipeline/run.py
 │
 ├─ CVSchema(**data)              Pydantic validation, extra fields silently ignored
 │
-└─ overwrite personal_info.email/phone with the regex-extracted values
+├─ overwrite personal_info.email/phone with the regex-extracted values
 │
 ▼
-{"success": true, "cv": {...}}   — a draft; nothing is persisted by this service
+if RANKING_ENABLED:
+│  JobDescription(**json.loads(form['job_description']))
+│  rank(validated_cv, job_description)
+│  return {"success": true, "cv": {...}, "ranking": {...}}
+│
+else:
+   return {"success": true, "cv": {...}, "ranking": null}
 ```
 
 Model failure (bad JSON, schema mismatch, HTTP error) on the first model in `MODEL_CHAIN`
 automatically retries the next one. Only if every model in the chain fails does the request
 return `502 ModelInferenceError`.
-
-### 2. Ranking — `POST /api/v1/rank`
-
-```text
-Flask route (app/main.py)
-│
-├─ RANKING_ENABLED check          off? return {"success": false, "error": "..."}  (200)
-│
-├─ CVSchema(**payload["candidate"])        usually the output of /cv/extract, as-is
-│
-├─ JobDescription(**payload["job_description"])
-│
-▼
-rank()  — app/pipeline/ranking.py   (100% deterministic — no LLM call in this path)
-│
-├─ canonicalise() every skill name          app/skills/canonicalize.py + taxonomy.yaml
-│                                           (exact taxonomy match, then fuzzy ≥92%)
-│
-├─ hard_skill_score = 0.8 × required_match_ratio + 0.2 × nice_to_have_match_ratio
-│
-├─ semantic_fit()                           app/providers/embeddings.py
-│     cosine similarity between an embedded CV-profile string and JD string
-│
-└─ final_score = 0.7 × hard_skill_score + 0.3 × semantic_fit
-│
-▼
-RankingResult{score, matched_skills, missing_skills, semantic_fit, breakdown}
-```
 
 `min_experience_years` on `JobDescription` is accepted but **not used** in scoring —
 `Experience` has no structured start/end dates to compute years from. Known gap.
