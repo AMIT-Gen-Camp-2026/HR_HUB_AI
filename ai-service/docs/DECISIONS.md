@@ -211,3 +211,54 @@ always open, and the fail-open behavior when the key isn't configured.
 ---
 
 ## *(next entry)*
+
+---
+
+## 2026-09-03 — Semantic fit remains diagnostic-only for v2
+
+**Decision.** Keep `SEMANTIC_WEIGHT=0.0` for the current deterministic-hard-skills-v2
+authoritative score. `semantic_fit()` remains available for diagnostics and future product
+evaluation, but it is not allowed to alter ranking or tie-breaking.
+
+**Reason.** The live TC-001 evidence showed variability in the extracted `CVSchema`, not in
+the ranking arithmetic. Re-enabling semantic scoring would add provider availability and
+model-quality dependencies to the score before a controlled quality evaluation has approved
+the trade-off. The ranking determinism and embedding-isolation tests pass with the signal
+disabled.
+
+**Rejected.** Re-enabling a 10-15% weight without an approved product benchmark; it would
+change score semantics and make provider failures relevant to ranking again.
+
+---
+
+## 2026-09-03 — Extraction snapshots are bounded and process-local
+
+**Decision.** Keep validated extraction snapshots in a process-local LRU cache with a
+one-hour TTL and a 128-entry maximum. Cache keys include cleaned-content hash, prompt/schema/
+taxonomy versions, and the configured model chain. Cached payloads are revalidated as
+`CVSchema` before use.
+
+**Reason.** This reduces repeated model calls without adding Redis/database infrastructure or
+persisting CV data to disk. TTL and LRU bounds limit the in-memory PII retention surface.
+
+**Rejected.** An unbounded dictionary or a new external cache service; the former retains PII
+indefinitely and the latter is unnecessary for the current single-process architecture.
+
+---
+
+## 2026-09-03 — Documentation caught up to the real service contract
+
+**Decision.** Bring the full-stack integration documentation and the service README back into
+sync with the code after several rounds of real scoring/extraction changes. The current
+contract is documented in `docs/FULLSTACK_INTEGRATION.md`, and the follow-up change list is
+captured in `docs/FULLSTACK_CHANGES_SINCE_LAST_HANDOFF.md` for the other team.
+
+**Reason.** Several releases of real pipeline work changed the score formula, the response
+shape, the extraction-status handling, taxonomy recovery, and the retention/cache behavior,
+but the public integration doc had drifted behind those changes. The project now needs a
+clean current-state contract for first-time readers, plus a short change list for teams that
+already built against the older handoff.
+
+**Rejected.** Leaving the old 70/30 explanation or the outdated split-endpoint description in
+place. That version no longer reflects the service that actually runs today and would cause
+full-stack clients to build against stale semantics.

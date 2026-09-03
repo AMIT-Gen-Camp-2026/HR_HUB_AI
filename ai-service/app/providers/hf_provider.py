@@ -99,6 +99,7 @@ def query_model(
     system_prompt: str,
     user_prompt: str,
     validate_fn: Callable[[str], T] | None = None,
+    metadata: dict[str, object] | None = None,
 ) -> T | str:
     """
     بتبعت الـ prompts للموديل الأساسي، ولو فشل (اتصال أو validation) بتجرب
@@ -127,6 +128,17 @@ def query_model(
         raise ModelInferenceError("MODEL_CHAIN فاضية - مفيش موديل نجرب عليه.")
 
     attempt_order = list(chain) + [chain[0]]
+
+    if metadata is not None:
+        metadata.clear()
+        metadata.update(
+            {
+                "model_used": None,
+                "provider": None,
+                "attempt_number": None,
+                "fallback_occurred": False,
+            }
+        )
 
     last_error: Exception | None = None
 
@@ -159,6 +171,15 @@ def query_model(
                 logger.warning(
                     "تم الرد بنجاح من %s بعد %d محاولة/محاولات فاشلة",
                     repo_id, attempt_num - 1,
+                )
+            if metadata is not None:
+                metadata.update(
+                    {
+                        "model_used": repo_id,
+                        "provider": provider,
+                        "attempt_number": attempt_num,
+                        "fallback_occurred": attempt_num > 1,
+                    }
                 )
             return result
 

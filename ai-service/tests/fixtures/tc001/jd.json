@@ -1,0 +1,71 @@
+{
+  "job_title": "AI Instructor",
+  "required_skills": {
+    "ai_assistants_and_prompt_engineering": [
+      "AI Assistants",
+      "Prompt Engineering",
+      "ChatGPT",
+      "Claude",
+      "Google Gemini",
+      "Microsoft Copilot",
+      "Perplexity AI",
+      "Google AI Studio",
+      "NotebookLM"
+    ],
+    "ai_image_generation": [
+      "AI Image Generation",
+      "Midjourney",
+      "ChatGPT Image Generation",
+      "Adobe Firefly",
+      "Leonardo AI",
+      "Flux AI",
+      "Ideogram",
+      "Recraft AI"
+    ],
+    "ai_video_generation": [
+      "AI Video Generation",
+      "Runway ML",
+      "Kling AI",
+      "Pika",
+      "Luma AI",
+      "HeyGen",
+      "Synthesia"
+    ],
+    "ai_voice_and_music": [
+      "ElevenLabs",
+      "PlayHT",
+      "Adobe Podcast",
+      "Suno AI",
+      "Udio"
+    ],
+    "design_and_presentation": [
+      "Canva AI",
+      "Gamma",
+      "Tome",
+      "Adobe Express",
+      "Figma AI"
+    ],
+    "ai_writing_and_marketing": [
+      "AI Copywriting",
+      "Social Media Content Creation",
+      "Email Marketing",
+      "SEO with AI",
+      "Content Strategy",
+      "AI-powered Marketing Campaigns",
+      "Branding with AI"
+    ],
+    "teaching_and_communication": [
+      "Previous teaching experience",
+      "Previous mentoring experience",
+      "Previous coaching experience",
+      "Previous training experience",
+      "Excellent presentation skills",
+      "Excellent communication skills",
+      "Ability to simplify complex concepts for beginners"
+    ]
+  },
+  "preferred_qualifications": [
+    "Strong portfolio showcasing AI-generated projects",
+    "Passion for learning and exploring new AI technologies"
+  ]
+}

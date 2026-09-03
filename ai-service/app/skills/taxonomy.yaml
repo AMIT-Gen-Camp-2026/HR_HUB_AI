@@ -218,3 +218,204 @@ skills:
     name: GCP
     aliases: ["google cloud", "google cloud platform"]
     category: platform
+
+  # --- AI instruction and creative AI ---
+  - id: skill.chatgpt
+    name: ChatGPT
+    aliases: [chatgpt, "chat gpt"]
+    category: ai_assistant
+
+  - id: skill.claude
+    name: Claude
+    aliases: []
+    category: ai_assistant
+
+  - id: skill.gemini
+    name: Gemini
+    aliases: ["google gemini"]
+    category: ai_assistant
+
+  - id: skill.microsoft_copilot
+    name: Microsoft Copilot
+    aliases: [copilot]
+    category: ai_assistant
+
+  - id: skill.perplexity
+    name: Perplexity
+    aliases: []
+    category: ai_assistant
+
+  - id: skill.google_ai_studio
+    name: Google AI Studio
+    aliases: ["ai studio"]
+    category: ai_assistant
+
+  - id: skill.notebooklm
+    name: NotebookLM
+    aliases: ["notebook lm"]
+    category: ai_assistant
+
+  - id: skill.prompt_engineering
+    name: Prompt Engineering
+    aliases: []
+    category: ai_practice
+
+  - id: skill.ai_image_generation
+    name: AI Image Generation
+    aliases: []
+    category: generative_ai
+
+  - id: skill.midjourney
+    name: Midjourney
+    aliases: []
+    category: generative_ai
+
+  - id: skill.chatgpt_image_generation
+    name: ChatGPT Image Generation
+    aliases: ["chatgpt image gen"]
+    category: generative_ai
+
+  - id: skill.adobe_firefly
+    name: Adobe Firefly
+    aliases: [firefly]
+    category: generative_ai
+
+  - id: skill.leonardo_ai
+    name: Leonardo AI
+    aliases: [leonardo]
+    category: generative_ai
+
+  - id: skill.flux
+    name: Flux
+    aliases: []
+    category: generative_ai
+
+  - id: skill.ideogram
+    name: Ideogram
+    aliases: []
+    category: generative_ai
+
+  - id: skill.recraft
+    name: Recraft
+    aliases: []
+    category: generative_ai
+
+  - id: skill.ai_video_generation
+    name: AI Video Generation
+    aliases: []
+    category: generative_ai
+
+  - id: skill.runway
+    name: Runway
+    aliases: ["runway ml"]
+    category: generative_ai
+
+  - id: skill.kling
+    name: Kling
+    aliases: []
+    category: generative_ai
+
+  - id: skill.pika
+    name: Pika
+    aliases: []
+    category: generative_ai
+
+  - id: skill.luma
+    name: Luma
+    aliases: []
+    category: generative_ai
+
+  - id: skill.heygen
+    name: HeyGen
+    aliases: ["hey gen"]
+    category: generative_ai
+
+  - id: skill.synthesia
+    name: Synthesia
+    aliases: []
+    category: generative_ai
+
+  - id: skill.elevenlabs
+    name: ElevenLabs
+    aliases: ["eleven labs"]
+    category: generative_ai
+
+  - id: skill.playht
+    name: PlayHT
+    aliases: ["play ht"]
+    category: generative_ai
+
+  - id: skill.adobe_podcast
+    name: Adobe Podcast
+    aliases: []
+    category: generative_ai
+
+  - id: skill.suno
+    name: Suno
+    aliases: []
+    category: generative_ai
+
+  - id: skill.udio
+    name: Udio
+    aliases: []
+    category: generative_ai
+
+  - id: skill.canva_ai
+    name: Canva AI
+    aliases: ["canva ai"]
+    category: ai_design
+
+  - id: skill.gamma
+    name: Gamma
+    aliases: []
+    category: ai_design
+
+  - id: skill.tome
+    name: Tome
+    aliases: []
+    category: ai_design
+
+  - id: skill.adobe_express
+    name: Adobe Express
+    aliases: []
+    category: design
+
+  - id: skill.figma_ai
+    name: Figma AI
+    aliases: []
+    category: ai_design
+
+  - id: skill.ai_copywriting
+    name: AI Copywriting
+    aliases: []
+    category: ai_marketing
+
+  - id: skill.social_media_content_creation
+    name: Social Media Content Creation
+    aliases: []
+    category: ai_marketing
+
+  - id: skill.email_marketing
+    name: Email Marketing
+    aliases: []
+    category: marketing
+
+  - id: skill.seo_with_ai
+    name: SEO with AI
+    aliases: ["ai seo"]
+    category: ai_marketing
+
+  - id: skill.content_strategy
+    name: Content Strategy
+    aliases: []
+    category: marketing
+
+  - id: skill.ai_marketing_campaigns
+    name: AI Marketing Campaigns
+    aliases: ["ai powered marketing campaigns"]
+    category: ai_marketing
+
+  - id: skill.branding_with_ai
+    name: Branding with AI
+    aliases: ["ai branding"]
+    category: ai_marketing

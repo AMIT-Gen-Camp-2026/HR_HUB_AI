@@ -1,55 +1,44 @@
 # AMIT Instructor Hub — AI Service -- CV-Ranking
 
 CV parsing, skill extraction, and candidate-to-JD ranking. Runs as its own container so
-that its dependencies, its latency profile and its failures stay isolated from the core API.
+that its dependencies, its latency profile, and its failures stay isolated from the core API.
 
-**Companion doc:** `docs/ARCHITECTURE.md` for the request path in detail ·
-`docs/DECISIONS.md` for why things are the way they are (including what changed and why,
-dated).
+**Companion docs:** `docs/ARCHITECTURE.md` for the request path and system boundaries ·
+`docs/FULLSTACK_INTEGRATION.md` for the current external API contract ·
+`docs/DECISIONS.md` for the decision history and why certain choices exist.
 
----
+## The rule that still holds
 
-## The one rule
+> A language model is used where language is the output. A score is computed by a documented algorithm, not generated.
 
-> A language model is used where **language** is the output.
-> A **score** is computed by a documented algorithm, not generated.
+The current ranking policy in `app/pipeline/ranking.py` is deterministic and does not call a model. The score is based on required-skill coverage plus a bounded preferred-skill bonus; semantic fit remains available as diagnostic metadata but has zero weight in the authoritative score.
 
-This holds in practice: `app/pipeline/ranking.py` (the score) is 100% deterministic —
-skill matching + cosine similarity, no LLM call. The LLM is only used for one thing:
-extracting structured fields from raw CV text.
+Nothing in this service writes to an instructor record. Every output is a draft.
 
-Nothing in this service writes to an instructor record. Every output is a **draft**.
+## Current runtime shape
 
----
+One Flask app, one merged evaluation endpoint, one extraction provider, one optional embedding provider path.
 
-## What's actually running
+| Piece | What it is |
+| --- | --- |
+| HTTP layer | Flask (`app/main.py`) |
+| CV extraction | Hugging Face Inference Providers with `MODEL_CHAIN` fallback |
+| Ranking | Deterministic hard-skill scoring; no model call in the scoring path |
+| Embeddings | `semantic_fit()` remains available for diagnostics; it is not authoritative in the current score |
+| PII handling | Email/phone/national-ID stripping before sending text to the model, then restored by regex extraction |
 
-One Flask app, one merged evaluation endpoint, one extraction provider, a choice of two embedding providers.
-
-| Piece                                             | What it is                                                                                                                             |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| HTTP layer                                        | Flask (`app/main.py`) — not FastAPI                                                                                                    |
-| CV extraction                                     | Hugging Face Inference Providers, 2-model fallback chain (`MODEL_CHAIN`)                                                               |
-| Ranking                                           | Deterministic algorithm, no model call                                                                                                 |
-| Embeddings (used by ranking's semantic-fit score) | `local` (sentence-transformers) or `api` (OpenAI-compatible endpoint — Gemini by default)                                              |
-| PII handling                                      | Email/phone/national-ID stripped before the CV text reaches the model provider; email/phone still populated via local regex extraction |
-
-See `docs/ARCHITECTURE.md` for the full request path and `docs/DECISIONS.md` if you're
-wondering why a design choice looks the way it does.
-
----
+See `docs/FULLSTACK_INTEGRATION.md` for the current API contract and `docs/ARCHITECTURE.md` for the end-to-end request path.
 
 ## Quick start
 
 ```bash
 git clone <repo-url>
 cd ai-service
-cp .env.example .env          # fill in HF_API_TOKEN and GEMINI_API_KEY
+cp .env.example .env          # fill in HF_API_TOKEN and GEMINI_API_KEY if needed
 python -m venv .venv
 .venv/bin/pip install -e ".[dev,ui]"
-make test                     # all mocked/deterministic - no network, no key needed
-python -m scripts.check_embeddings   # needs a real GEMINI_API_KEY - confirms embeddings actually work
-make run                      # Flask dev server on http://localhost:5000 (FLASK_PORT in .env)
+make test                     # deterministic tests; no network needed
+make run                      # Flask dev server on http://localhost:5000
 make ui                       # Streamlit on http://localhost:8501
 ```
 
@@ -59,57 +48,41 @@ Docker:
 docker compose up --build     # ai-service on :5000, ui on :8501
 ```
 
----
+## Ranking summary
 
-## Repository layout
+The current score is not the original `0.7 hard + 0.3 semantic` formula. The authoritative score is now based on:
 
-```text
-ai-service/
-├── app/
-│   ├── main.py                         Flask app - the only HTTP entry point (1 merged route)
-│   ├── pipeline/                       extract → normalize → redact → prompt → model → validate
-│   ├── prompts/                        one hand-written system prompt (registry.py)
-│   ├── providers/                      hf_provider.py (extraction) + embeddings.py (local | api)
-│   ├── schemas/                        Pydantic models — CVSchema, JobDescription, RankingResult
-│   └── security/                       file_validator.py — magic-byte checks, safe storage names
-├── config/settings.py                  all env vars, one place
-├── eval/                               labelled datasets + runners — dataset is currently empty, see below
-├── ui/streamlit_app.py                 manual-testing tool, not the product
-├── tests/                              unit + integration, all mocked (no network needed to run them)
-├── scripts/                            one-off ops scripts (e.g. check_embeddings.py)
-├── docs/                               architecture, decisions log
-└── data/                               gitignored — never commit a real CV
-```
+- required-skill coverage ratio
+- a bounded preferred-skill bonus
+- a hard cap at `100.0`
+- semantic fit disabled from the score by explicit configuration (`SEMANTIC_WEIGHT = 0.0`)
 
----
+The exact formula and examples are documented in `docs/FULLSTACK_INTEGRATION.md` so integrators can build thresholds and UI states correctly.
+
+## Architecture pointers
+
+- Request path: `app/main.py` -> `app/pipeline/run.py` -> model validation / extraction -> `app/pipeline/ranking.py`
+- Extraction status: `SUCCESS`, `EMPTY`, `FAILED`
+- Supported external contract: `POST /api/v1/cv/evaluate`
+- Rating and evidence fields are in `app/schemas/cv.py`
+- Skill normalization and taxonomy recovery are in `app/skills/canonicalize.py`
+- Embedding support remains in `app/providers/embeddings.py`, but it is not the authoritative score source under current policy.
 
 ## Rules the team agreed to (and their real status)
 
-1. **Nothing in `notebooks/` is imported by `app/`.** ✅ true today.
-2. **No secret in the repository, ever.** Keys come from `.env` (gitignored). No CI
-   secret-scan is wired up yet.
-3. **No real CV is committed.** `data/` is gitignored.
-4. **Every model output is validated against a Pydantic schema.** ✅ `CVSchema(**data)` in
-   `app/pipeline/run.py::parse_and_validate` — a validation failure is a hard error, retried
-   against the next model in `MODEL_CHAIN`.
-5. **Every AI call is logged.** Partially true — `logging` calls exist in `hf_provider.py`,
-   but there's no structured cost/token/latency tracking. Aspirational beyond that.
-6. **Every feature has a kill switch.** True for ranking (`RANKING_ENABLED`, tested). Not
-   true for extraction yet.
-7. **A feature without a metric cannot be accepted.** Not enforced —
-   `eval/datasets/cv-extraction/v1/labels.jsonl` is currently empty, so extraction accuracy
-   has not actually been measured. This is the single biggest gap before trusting the
-   pipeline's real-world accuracy.
-
----
+1. **No real CV is committed.** `data/` is gitignored.
+2. **Every model output is validated against a Pydantic schema.** Yes; validation failures are retried across `MODEL_CHAIN` before surfacing a `502`.
+3. **Every feature has a kill switch.** Ranking has `RANKING_ENABLED`; extraction does not yet have an equivalent kill switch.
+4. **Evaluation data is required before trusting extraction quality.** This remains an open gap; the labelled extraction dataset is still empty.
+5. **No docs should claim a score formula that is no longer in code.** This is the reason for the current documentation refresh.
 
 ## Where to start reading
 
-| You are…                   | Read                                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------- |
-| New to the project         | `docs/ARCHITECTURE.md`, then `app/pipeline/run.py`                                    |
-| Touching the prompt        | `app/prompts/registry.py` — read the security rules before editing                    |
-| Touching embeddings        | `app/providers/embeddings.py`, then run `scripts/check_embeddings.py`                 |
-| Touching ranking           | `app/pipeline/ranking.py` + `tests/unit/test_ranking.py`                              |
-| Debugging a bad extraction | `app/providers/hf_provider.py` logs + `app/pipeline/postprocess.py`                   |
-| Adding an evaluation       | `eval/README.md` — and consider that the dataset is empty, so this is high-value work |
+| You are… | Read |
+| --- | --- |
+| New to the project | `docs/ARCHITECTURE.md`, then `app/pipeline/run.py` |
+| Touching the prompt | `app/prompts/registry.py` |
+| Touching embeddings | `app/providers/embeddings.py` and `scripts/check_embeddings.py` |
+| Touching ranking | `app/pipeline/ranking.py` and `tests/unit/test_ranking.py` |
+| Debugging extraction | `app/providers/hf_provider.py` and `app/pipeline/postprocess.py` |
+| Integrating with the API | `docs/FULLSTACK_INTEGRATION.md` |

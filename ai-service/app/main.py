@@ -18,7 +18,12 @@ from pydantic import ValidationError as PydanticValidationError
 
 from config.settings import config
 from app.pipeline.ranking import rank as compute_ranking
-from app.pipeline.run import extract_raw_text, clean_and_query
+from app.pipeline.run import (
+    clean_and_query,
+    extract_raw_text,
+    extraction_status,
+    get_extraction_metadata,
+)
 from app.providers.hf_provider import ModelInferenceError
 from app.schemas.cv import CVSchema, JobDescription
 from app.security.auth import require_api_key
@@ -102,11 +107,36 @@ def evaluate_cv():
         except ModelInferenceError as e:
             logger.error("Model inference/validation failed across full chain: %s", e)
             return jsonify(
-                {"success": False, "error": "Model inference failed. Please try again."}
+                {
+                    "success": False,
+                    "error": "Model inference failed. Please try again.",
+                    "extraction_status": "FAILED",
+                }
             ), 502
 
+        status = extraction_status(validated_cv)
+
+        if status == "EMPTY":
+            return jsonify(
+                {
+                    "success": True,
+                    "cv": validated_cv.model_dump(),
+                    "ranking": None,
+                    "extraction_status": "EMPTY",
+                    "extraction_metadata": get_extraction_metadata(),
+                }
+            ), 200
+
         if not config.RANKING_ENABLED:
-            return jsonify({"success": True, "cv": validated_cv.model_dump(), "ranking": None}), 200
+            return jsonify(
+                {
+                    "success": True,
+                    "cv": validated_cv.model_dump(),
+                    "ranking": None,
+                    "extraction_status": status,
+                    "extraction_metadata": get_extraction_metadata(),
+                }
+            ), 200
 
         try:
             ranking_result = compute_ranking(validated_cv, job_description)
@@ -115,7 +145,13 @@ def evaluate_cv():
             return jsonify({"success": False, "error": "Internal server error."}), 500
 
         return jsonify(
-            {"success": True, "cv": validated_cv.model_dump(), "ranking": ranking_result.model_dump()}
+            {
+                "success": True,
+                "cv": validated_cv.model_dump(),
+                "ranking": ranking_result.model_dump(),
+                "extraction_status": status,
+                "extraction_metadata": get_extraction_metadata(),
+            }
         ), 200
 
     except Exception:

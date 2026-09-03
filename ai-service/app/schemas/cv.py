@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class StrictModel(BaseModel):
@@ -57,6 +57,32 @@ class JobDescription(StrictModel):
     nice_to_have_skills: List[str] = Field(default_factory=list)
     min_experience_years: Optional[int] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_payload(cls, value):
+        if not isinstance(value, dict):
+            return value
+
+        normalized = dict(value)
+        if "title" not in normalized and "job_title" in normalized:
+            normalized["title"] = normalized["job_title"]
+
+        required = normalized.get("required_skills")
+        if isinstance(required, dict):
+            normalized["required_skills"] = [
+                skill
+                for skills in required.values()
+                if isinstance(skills, list)
+                for skill in skills
+            ]
+
+        if "nice_to_have_skills" not in normalized:
+            qualifications = normalized.get("preferred_qualifications", [])
+            if isinstance(qualifications, list):
+                normalized["nice_to_have_skills"] = qualifications
+
+        return normalized
+
 
 class RankingRequest(StrictModel):
     candidate: CVSchema
@@ -67,5 +93,9 @@ class RankingResult(StrictModel):
     score: float
     matched_skills: List[str]
     missing_skills: List[str]
+    matched_required_skills: List[str] = Field(default_factory=list)
+    missing_required_skills: List[str] = Field(default_factory=list)
+    matched_preferred_skills: List[str] = Field(default_factory=list)
+    missing_preferred_skills: List[str] = Field(default_factory=list)
     semantic_fit: Optional[float] = None
     breakdown: dict

@@ -12,6 +12,7 @@ import pytest
 
 from app import main
 from app.pipeline import ranking
+from app.providers.hf_provider import ModelInferenceError
 from app.schemas.cv import CVSchema
 
 
@@ -118,3 +119,51 @@ def test_evaluate_respects_kill_switch(client, monkeypatch: pytest.MonkeyPatch) 
     assert body["success"] is True
     assert body["ranking"] is None
     assert body["cv"]["skills"] == ["Python"]
+
+
+def test_evaluate_reports_failed_extraction_without_ranking(
+    client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(
+        main,
+        "clean_and_query",
+        lambda raw_text: (_ for _ in ()).throw(ModelInferenceError("provider failed")),
+    )
+
+    response = client.post(
+        "/api/v1/cv/evaluate", data=_multipart_data(), content_type="multipart/form-data"
+    )
+
+    assert response.status_code == 502
+    body = response.get_json()
+    assert body["extraction_status"] == "FAILED"
+    assert "ranking" not in body
+
+
+def test_evaluate_does_not_rank_empty_extraction(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(main, "clean_and_query", lambda raw_text: CVSchema())
+    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: pytest.fail("ranked empty CV"))
+
+    response = client.post(
+        "/api/v1/cv/evaluate", data=_multipart_data(), content_type="multipart/form-data"
+    )
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["extraction_status"] == "EMPTY"
+    assert body["ranking"] is None
+
+
+def test_evaluate_exposes_extraction_metadata(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(main, "clean_and_query", lambda raw_text: CVSchema(skills=["Python"]))
+    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: ranking.rank(candidate, job_description))
+
+    response = client.post(
+        "/api/v1/cv/evaluate", data=_multipart_data(), content_type="multipart/form-data"
+    )
+
+    assert response.status_code == 200
+    assert isinstance(response.get_json()["extraction_metadata"], dict)
