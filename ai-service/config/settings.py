@@ -61,7 +61,7 @@ class Config:
     # ============================================================
     # Model generation settings
     # ============================================================
-    MAX_NEW_TOKENS: int = int(os.getenv("MAX_NEW_TOKENS", "2048"))
+    MAX_NEW_TOKENS: int = int(os.getenv("MAX_NEW_TOKENS", "4096"))
     MODEL_TIMEOUT_SECONDS: int = int(os.getenv("MODEL_TIMEOUT_SECONDS", "60"))
 
     # ============================================================

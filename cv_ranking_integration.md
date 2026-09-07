@@ -230,6 +230,9 @@ FLASK_PORT=5000
 
 # Feature flags
 RANKING_ENABLED=True
+
+# Model generation (increase if a long CV still produces truncated JSON)
+MAX_NEW_TOKENS=4096
 ```
 
 Never commit this file to git.

@@ -78,6 +78,7 @@ def _call_model(repo_id: str, provider: str, system_prompt: str, user_prompt: st
                 {"role": "user", "content": user_prompt},
             ],
             max_tokens=config.MAX_NEW_TOKENS,
+                response_format={"type": "json_object"},
             temperature=0.0,
         )
     except HfHubHTTPError as e:
