@@ -1,0 +1,139 @@
+{
+  "analysis_id": "ANL-eb44d74d0648",
+  "status": "completed",
+  "completeness": {
+    "slides_total": 3,
+    "slides_processed": 3,
+    "slides_failed": 0
+  },
+  "presentation": {
+    "filename": "01_en_ml_results.pptx",
+    "slide_count": 3
+  },
+  "scores": {
+    "overall": 22,
+    "fact_accuracy": 30,
+    "verified_ratio": 0,
+    "evidence_coverage": 0,
+    "claim_reliability": 30
+  },
+  "summary": {
+    "total_claims": 3,
+    "supported": 0,
+    "contradicted": 0,
+    "project_unsupported": 0,
+    "plausibility_flag": 3,
+    "unclear": 0,
+    "not_checkable": 0
+  },
+  "claims": [
+    {
+      "claim_id": "CLM-001",
+      "slide_number": 1,
+      "text": "Our CNN model achieved 96% accuracy.",
+      "claim_type": "performance",
+      "track": "project_specific",
+      "importance": "high",
+      "subject": "model",
+      "property": "accuracy",
+      "value": 96.0,
+      "unit": "%"
+    },
+    {
+      "claim_id": "CLM-002",
+      "slide_number": 2,
+      "text": "Our CNN model achieved 96% accuracy.",
+      "claim_type": "performance",
+      "track": "project_specific",
+      "importance": "high",
+      "subject": "model",
+      "property": "accuracy",
+      "value": 96.0,
+      "unit": "%"
+    },
+    {
+      "claim_id": "CLM-003",
+      "slide_number": 3,
+      "text": "Our CNN model achieved 96% accuracy.",
+      "claim_type": "performance",
+      "track": "project_specific",
+      "importance": "high",
+      "subject": "model",
+      "property": "accuracy",
+      "value": 96.0,
+      "unit": "%"
+    }
+  ],
+  "verifications": [
+    {
+      "claim_id": "CLM-001",
+      "status": "plausibility_flag",
+      "confidence": 0.6,
+      "reason": "stub_provider: reported result requires verification.",
+      "evidence": [],
+      "verification_basis": "plausibility_heuristic_only",
+      "verification_error": null
+    },
+    {
+      "claim_id": "CLM-002",
+      "status": "plausibility_flag",
+      "confidence": 0.6,
+      "reason": "stub_provider: reported result requires verification.",
+      "evidence": [],
+      "verification_basis": "plausibility_heuristic_only",
+      "verification_error": null
+    },
+    {
+      "claim_id": "CLM-003",
+      "status": "plausibility_flag",
+      "confidence": 0.6,
+      "reason": "stub_provider: reported result requires verification.",
+      "evidence": [],
+      "verification_basis": "plausibility_heuristic_only",
+      "verification_error": null
+    }
+  ],
+  "issues": [
+    {
+      "slide_number": 1,
+      "claim_id": "CLM-001",
+      "severity": "high",
+      "status": "plausibility_flag",
+      "claim_text": "Our CNN model achieved 96% accuracy.",
+      "correction": null
+    },
+    {
+      "slide_number": 2,
+      "claim_id": "CLM-002",
+      "severity": "high",
+      "status": "plausibility_flag",
+      "claim_text": "Our CNN model achieved 96% accuracy.",
+      "correction": null
+    },
+    {
+      "slide_number": 3,
+      "claim_id": "CLM-003",
+      "severity": "high",
+      "status": "plausibility_flag",
+      "claim_text": "Our CNN model achieved 96% accuracy.",
+      "correction": null
+    }
+  ],
+  "suggested_interview_questions": [
+    {
+      "slide_number": 1,
+      "claim_id": "CLM-001",
+      "suggested_question": "Can you walk me through how you arrived at: 'Our CNN model achieved 96% accuracy.'? (stub_provider: reported result requires verification.)"
+    },
+    {
+      "slide_number": 2,
+      "claim_id": "CLM-002",
+      "suggested_question": "Can you walk me through how you arrived at: 'Our CNN model achieved 96% accuracy.'? (stub_provider: reported result requires verification.)"
+    },
+    {
+      "slide_number": 3,
+      "claim_id": "CLM-003",
+      "suggested_question": "Can you walk me through how you arrived at: 'Our CNN model achieved 96% accuracy.'? (stub_provider: reported result requires verification.)"
+    }
+  ]
+}

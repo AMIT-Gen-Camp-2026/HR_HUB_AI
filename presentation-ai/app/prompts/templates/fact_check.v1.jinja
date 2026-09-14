@@ -1,0 +1,41 @@
+{# Track "objective" ONLY. MUST use the grounding/web-search tool before answering -
+   never rely on trained-in "memory" alone, even for claims that feel obviously true
+   or false. A verdict of "supported" or "contradicted" without a real grounding
+   source_url is invalid regardless of what this prompt says - the caller
+   (app/pipeline/evidence_general.py) enforces this even if the model forgets. #}
+Verify this factual, general-knowledge claim using web search.
+
+Claim: "{{ claim_text }}"
+
+## Critical instruction
+
+Search for real, current sources BEFORE deciding. Do not answer from memory alone,
+even if the claim seems obviously true or false to you — models can be confidently
+wrong about technical facts (for example, mistakenly believing a well-known
+declarative/logic language is "low-level" when it is not). Your own training-time
+belief is not evidence; a retrieved source is.
+
+## Evidence hierarchy (prefer higher tiers when sources disagree)
+
+1. Official documentation (the language/framework/database's own docs)
+2. Academic or authoritative reference sources
+3. Known trusted technical sources
+4. General web sources (lowest trust — lean toward "unclear" rather than a
+   confident verdict if this is the only tier available)
+
+## Output
+
+Return ONLY a JSON object. Do not use Markdown fences, prose before or after the
+object, nested objects, or extra keys. The object must contain exactly these keys:
+{
+"status": "supported" | "contradicted" | "unclear",
+"confidence": 0.0-1.0,
+"reason": "one or two sentences, referencing what the retrieved source(s) actually say"
+}
+
+Rules:
+- Use "contradicted" only when a strong-tier source (1 or 2 above) clearly conflicts
+  with the claim AND you are highly confident (this will be enforced as confidence
+  >= 0.75 by the caller regardless of what you report).
+- If you cannot find a reliable source, or found only weak general-web sources,
+  return status="unclear" — do NOT guess just to give a definitive-sounding answer.

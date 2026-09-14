@@ -1,0 +1,76 @@
+{
+  "analysis_id": "ANL-47bfd4c4c16c",
+  "claims": [
+    {
+      "claim_id": "CLM-001",
+      "claim_type": "technology",
+      "importance": "high",
+      "property": null,
+      "slide_number": 1,
+      "subject": null,
+      "text": "Prolog is a low-level programming language.",
+      "track": "objective",
+      "unit": null,
+      "value": null
+    },
+    {
+      "claim_id": "CLM-002",
+      "claim_type": "technology",
+      "importance": "medium",
+      "property": null,
+      "slide_number": 2,
+      "subject": null,
+      "text": "We used PostgreSQL as our primary database.",
+      "track": "project_specific",
+      "unit": null,
+      "value": null
+    }
+  ],
+  "issues": [
+    {
+      "claim_id": "CLM-001",
+      "claim_text": "Prolog is a low-level programming language.",
+      "correction": null,
+      "severity": "medium",
+      "slide_number": 1,
+      "status": "unclear"
+    }
+  ],
+  "presentation": {
+    "filename": "correction_test.pptx",
+    "slide_count": 2
+  },
+  "scores": {
+    "claim_reliability": 50,
+    "evidence_coverage": 40,
+    "fact_accuracy": 50,
+    "overall": 48
+  },
+  "status": "completed",
+  "suggested_interview_questions": [],
+  "summary": {
+    "contradicted": 0,
+    "not_checkable": 0,
+    "plausibility_flag": 0,
+    "project_unsupported": 1,
+    "supported": 0,
+    "total_claims": 2,
+    "unclear": 1
+  },
+  "verifications": [
+    {
+      "claim_id": "CLM-001",
+      "confidence": 0.0,
+      "evidence": [],
+      "reason": "Web search verification unavailable (grounding quota exhausted for this account); requires manual review.",
+      "status": "unclear"
+    },
+    {
+      "claim_id": "CLM-002",
+      "confidence": 1.0,
+      "evidence": [],
+      "reason": "Using PostgreSQL as a primary database is a standard and widely adopted industry practice for backend data storage, making this claim entirely plausible.",
+      "status": "project_unsupported"
+    }
+  ]
+}

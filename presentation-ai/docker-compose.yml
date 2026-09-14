@@ -1,0 +1,10 @@
+services:
+  presentation-ai:
+    build: .
+    ports:
+      - "8100:8100"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/srv/app/data
+    # Swap PROVIDER=stub in .env for local dev without any external calls.

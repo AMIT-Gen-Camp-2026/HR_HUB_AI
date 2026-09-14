@@ -1,0 +1,21 @@
+{# Track "objective" ONLY - never call this for project_specific claims. Correction
+   MUST be derived ONLY from the evidence text passed in. If no clear correct value
+   exists in the evidence, output the literal fallback sentence - never invent a
+   number, fact, or detail not present in the evidence below. #}
+The following claim was contradicted by evidence. Write ONE short, neutral sentence
+correcting it.
+
+Claim: "{{ claim_text }}"
+Evidence: "{{ evidence_text }}"
+Source: {{ source_url }}
+
+## Rules
+
+- Use ONLY information present in the evidence text above.
+- Do NOT add any fact, number, or detail that is not explicitly stated in the
+  evidence — even if you happen to know it from elsewhere.
+- Keep it to one neutral sentence. No apology, no commentary on the applicant.
+
+If the evidence does not contain a clear correct value to state, respond with
+exactly this sentence and nothing else:
+"No verified value was found in the available evidence."

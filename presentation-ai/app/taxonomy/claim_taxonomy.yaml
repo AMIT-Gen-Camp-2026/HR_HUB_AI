@@ -1,0 +1,38 @@
+# Canonical claim_type list — must match app/schemas/presentation.py:ClaimType exactly.
+claim_types:
+  - performance
+  - dataset
+  - architecture
+  - technology
+  - algorithm
+  - capability
+  - business
+
+# Canonical property ids + accepted free-text aliases the model might produce.
+# canonicalize.py normalises any alias below to its canonical key before the claim
+# is stored — this alias list grows as we see real presentations, it is NOT exhaustive.
+properties:
+  accuracy:
+    aliases: ["acc", "accuracy rate", "classification accuracy", "دقة", "نسبة الدقة"]
+    unit: "%"
+  precision:
+    aliases: ["precision score"]
+    unit: "%"
+  recall:
+    aliases: ["recall score", "sensitivity"]
+    unit: "%"
+  f1_score:
+    aliases: ["f1", "f-score", "f1-score"]
+    unit: null
+  latency:
+    aliases: ["response time", "inference time", "processing time"]
+    unit: "ms"
+  dataset_size:
+    aliases: ["number of images", "number of samples", "training samples", "حجم البيانات"]
+    unit: "count"
+  class_count:
+    aliases: ["number of classes", "num classes"]
+    unit: "count"
+  r2_score:
+    aliases: ["r-squared", "r²", "r2"]
+    unit: null

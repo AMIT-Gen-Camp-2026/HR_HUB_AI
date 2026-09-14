@@ -1,0 +1,22 @@
+# Per-provider capability flags, read by app/providers/factory.py + api_provider.py
+# at startup to decide what a given backend can actually do.
+api:
+  supports_grounding: true
+  supports_json_mode: true
+  supports_vision: true
+  supports_embeddings: false
+hf:
+  supports_grounding: false
+  supports_json_mode: false
+  supports_vision: false
+  supports_embeddings: true
+local:
+  supports_grounding: false
+  supports_json_mode: true
+  supports_vision: false
+  supports_embeddings: false
+stub:
+  supports_grounding: true   # fakes a grounding source, for exercising the code path
+  supports_json_mode: true
+  supports_vision: false
+  supports_embeddings: true

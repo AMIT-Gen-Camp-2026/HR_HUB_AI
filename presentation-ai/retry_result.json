@@ -1,0 +1,82 @@
+{
+  "analysis_id": "ANL-ceb25300ad2e",
+  "claims": [
+    {
+      "claim_id": "CLM-001",
+      "claim_type": "performance",
+      "importance": "high",
+      "property": "accuracy",
+      "slide_number": 1,
+      "subject": "CNN model",
+      "text": "Our CNN model achieved 99.9% accuracy on the validation set.",
+      "track": "project_specific",
+      "unit": "%",
+      "value": 99.9
+    },
+    {
+      "claim_id": "CLM-002",
+      "claim_type": "dataset",
+      "importance": "high",
+      "property": "image count",
+      "slide_number": 2,
+      "subject": "dataset",
+      "text": "The dataset contains 50,000 labeled images collected over six months.",
+      "track": "project_specific",
+      "unit": "images",
+      "value": 50000.0
+    }
+  ],
+  "issues": [
+    {
+      "claim_id": "CLM-001",
+      "claim_text": "Our CNN model achieved 99.9% accuracy on the validation set.",
+      "correction": null,
+      "severity": "high",
+      "slide_number": 1,
+      "status": "plausibility_flag"
+    }
+  ],
+  "presentation": {
+    "filename": "track_b_test.pptx",
+    "slide_count": 2
+  },
+  "scores": {
+    "claim_reliability": 55,
+    "evidence_coverage": 100,
+    "fact_accuracy": 55,
+    "overall": 66
+  },
+  "status": "completed",
+  "suggested_interview_questions": [
+    {
+      "claim_id": "CLM-001",
+      "slide_number": 1,
+      "suggested_question": "Can you walk me through how you arrived at: \"Our CNN model achieved 99.9% accuracy on the validation set.\"? (Reported accuracy of 99.9% is at or above the 99.5% threshold treated as suspiciously perfect.)"
+    }
+  ],
+  "summary": {
+    "contradicted": 0,
+    "not_checkable": 0,
+    "plausibility_flag": 1,
+    "project_unsupported": 1,
+    "supported": 0,
+    "total_claims": 2,
+    "unclear": 0
+  },
+  "verifications": [
+    {
+      "claim_id": "CLM-001",
+      "confidence": 0.9,
+      "evidence": [],
+      "reason": "Reported accuracy of 99.9% is at or above the 99.5% threshold treated as suspiciously perfect.",
+      "status": "plausibility_flag"
+    },
+    {
+      "claim_id": "CLM-002",
+      "confidence": 0.95,
+      "evidence": [],
+      "reason": "Collecting 50,000 labeled images over six months is a very standard and realistic scale for a custom computer vision dataset curated by a small team or project. This volume does not raise any red flags regarding feasibility.",
+      "status": "project_unsupported"
+    }
+  ]
+}

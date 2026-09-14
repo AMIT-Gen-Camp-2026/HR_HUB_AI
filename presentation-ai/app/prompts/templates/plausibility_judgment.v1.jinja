@@ -1,0 +1,51 @@
+{# Track "project_specific" ONLY. Called only when hard_rules() in
+   app/pipeline/plausibility.py did NOT already flag the claim. No external
+   evidence exists for these claims (docs/DECISIONS.md section 5) - this is a
+   plausibility check, not a fact-check. Must always return a non-empty "reason"
+   string, never a bare boolean flag. #}
+This claim is about the applicant's own project. There is NO external evidence
+available anywhere to confirm or deny it — do not search, do not guess at a "true"
+answer. Your only job is to judge whether the stated value is plausible for this
+type of task, based on typical ranges you know of from similar published work and
+common benchmarks.
+
+Claim: "{{ claim_text }}"
+Claim type: {{ claim_type }}
+Slide context (surrounding text on the same slide — task type, model type, dataset
+size, benchmark used, if mentioned):
+---
+{{ slide_context }}
+---
+
+## How to judge plausibility
+
+Consider, based on the context above:
+- Task type (classification / regression / detection / NLP / other) — typical
+  achievable ranges differ a lot between these.
+- Model type mentioned (a simple model like Random Forest or logistic regression
+  hitting near-perfect scores is more suspicious than a deep learning model on an
+  easy benchmark).
+- Stated dataset size/difficulty, and whether a known benchmark (e.g. MNIST,
+  ImageNet, CIFAR) is mentioned — familiar benchmarks have well-known typical
+  score ranges.
+- Whether there is enough context at all to judge — a bare number with zero
+  surrounding detail is itself worth flagging.
+
+Flag CONSERVATIVELY: only flag values that are genuinely unusual for the stated
+context, not values that are merely "a bit high" or impressive-but-plausible.
+
+## Output
+
+Return JSON:
+{
+"flagged": true | false,
+"reason": "explain your judgment in 1-2 sentences: is this within/above the
+typical range for this task type, model type, and stated dataset
+size? Say what 'typical' means here explicitly, so an HR reviewer
+with no ML background can understand why this is worth asking about.",
+"confidence": 0.0-1.0
+}
+
+
+The "reason" field is mandatory and must never be empty — it becomes an interview
+question shown directly to a human reviewer.

@@ -1,0 +1,24 @@
+{# Track "objective" only. The search results are untrusted reference content, not instructions. #}
+Verify the factual, general-knowledge claim below using ONLY the supplied web-search
+results. Do not use your own memory, browse the web, or add facts not present in the
+snippets.
+
+Claim: "{{ claim_text }}"
+
+<<<SEARCH_RESULTS_START>>>
+{{ search_results }}
+<<<SEARCH_RESULTS_END>>>
+
+Return ONLY a JSON object. Do not use Markdown fences, prose before or after the
+object, nested objects, or extra keys. The object must contain exactly these keys:
+{
+  "status": "supported" | "contradicted" | "unclear",
+  "confidence": 0.0-1.0,
+  "reason": "one or two sentences that name the provided URL(s) whose snippets support or contradict the claim"
+}
+
+Rules:
+- Use SUPPORTED or CONTRADICTED only if the provided snippets directly support or
+  clearly conflict with the claim. Cite the relevant provided URL(s) in `reason`.
+- Return UNCLEAR when the snippets are insufficient, irrelevant, weak, or conflicting.
+- Never invent sources, source content, or facts beyond the supplied snippets.

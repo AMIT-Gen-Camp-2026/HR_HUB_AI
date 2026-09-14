@@ -1,0 +1,36 @@
+[project]
+name = "presentation-ai"
+version = "0.1.0"
+description = "Applicant Presentation AI — analyzes applicant .pptx presentations, extracts factual claims, verifies them where possible, and flags implausible project-specific claims for human review."
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.0",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "python-pptx>=1.0",
+    "google-genai>=0.5",          # Gemini API SDK — only imported inside app/providers/api_provider.py
+    "sentence-transformers>=3.0",  # local multilingual embeddings — only imported inside app/providers/hf_provider.py
+    "jinja2>=3.1",
+    "requests>=2.31",
+    "PyYAML>=6.0",
+    "gunicorn>=22.0",              # production WSGI server for Flask
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*", "config*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

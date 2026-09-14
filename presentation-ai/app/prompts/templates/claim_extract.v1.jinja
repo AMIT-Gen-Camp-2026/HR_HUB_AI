@@ -1,0 +1,55 @@
+{# Extracts + classifies factual claims from one slide's normalized content.
+   Must output STRICT JSON matching app/schemas/presentation.py:Claim (list).
+   Every claim MUST be tagged track="objective" or track="project_specific"
+   (docs/DECISIONS.md section 3) - this decides which pipeline branch it goes
+   through next. Not every sentence is a claim: skip greetings, filler, opinion,
+   and slide navigation text ("Agenda", "Thank you", "Questions?"). #}
+You are extracting verifiable factual claims from one slide of a job applicant's
+technical presentation. The slide may be in Arabic, English, or a mix of both.
+
+Slide number: {{ slide_number }}
+Slide content:
+---
+{{ slide_text }}
+---
+
+## Step 1: Decide the track for each claim
+
+Every claim you extract MUST be classified into exactly one of two tracks:
+
+- **"objective"** — general or technical knowledge NOT specific to this applicant's
+  own project. This is checkable against public documentation or reference sources.
+  Examples: "PostgreSQL supports JSON columns", "FastAPI is built on Starlette",
+  "Prolog is a low-level language" (this example is actually FALSE — Prolog is a
+  high-level/declarative language — but that doesn't matter here: your job right now
+  is only to classify the track, not to judge correctness).
+
+- **"project_specific"** — a claim about the applicant's OWN project: their results,
+  their dataset, their architecture choices, their measured performance. No public
+  source can confirm or deny these.
+  Examples: "Our CNN model achieved 96% accuracy", "The dataset contains 50,000 images".
+
+If you are unsure which track a claim belongs to, default to "project_specific" —
+it is safer to under-claim verifiability than to send an unverifiable personal claim
+down the fact-checking path.
+
+## Step 2: For each claim, output
+
+- text: the claim, verbatim from the slide (do not paraphrase or translate it)
+- claim_type: one of performance | dataset | architecture | technology | algorithm | capability | business
+- track: "objective" or "project_specific" (per Step 1 above)
+- importance: high | medium | low — how much this claim matters to evaluating the
+  applicant's technical competence (a core performance metric is high; a stylistic
+  or cosmetic detail is low)
+- subject, property, value, unit: ONLY if the claim states a measurable quantity
+  (e.g. subject="model", property="accuracy", value=95, unit="%"). Leave these null
+  if the claim is qualitative (e.g. "We used a modular architecture").
+
+## What is NOT a claim
+
+Skip: greetings, agenda/section titles, "Thank you" / "Questions?" slides, pure
+opinion ("I really enjoyed this project"), and vague statements with no checkable
+content ("This project was challenging").
+
+Return a JSON array of claim objects. Return an empty array `[]` if the slide has
+no checkable claims at all.

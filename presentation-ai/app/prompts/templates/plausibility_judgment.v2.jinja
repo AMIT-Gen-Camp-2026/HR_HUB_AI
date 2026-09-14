@@ -1,0 +1,39 @@
+{# Track "project_specific" ONLY (Batch & Single support).
+   Bumped from v1:
+   - Added batched claim judgment support for up to 3-5 claims per call to reduce prompt token duplication.
+   - Requires returning a JSON array of judgments keyed by claim_id. #}
+You are judging the plausibility of {{ claims|length }} project-specific claim(s) from an applicant's presentation.
+There is NO external evidence available anywhere to confirm or deny these — do not search or guess.
+Your only job is to judge whether the stated value is plausible for the given task and model type, based on typical ranges from published work and common benchmarks.
+
+Claims to evaluate:
+{% for c in claims %}
+---
+Claim ID: {{ c.claim_id }}
+Claim Text: "{{ c.claim_text }}"
+Claim Type: {{ c.claim_type }}
+Slide Context:
+{{ c.slide_context }}
+{% endfor %}
+---
+
+## How to judge plausibility
+
+For each claim:
+- Consider task type, model architecture, dataset size, and whether a known benchmark is mentioned.
+- Flag CONSERVATIVELY: only flag values that are genuinely unusual or suspicious (e.g. claims of near-perfect accuracy on tiny datasets or impossible throughput), not values that are merely impressive.
+- Explain your judgment in 1-2 clear, neutral sentences in the "reason" field. Say what "typical" means so an HR reviewer can understand.
+
+## Output Format
+
+Return a JSON array with one object per claim:
+[
+  {
+    "claim_id": "CLM-xxx",
+    "flagged": true | false,
+    "reason": "1-2 sentence explanation of plausibility for this task and model type.",
+    "confidence": 0.0-1.0
+  }
+]
+
+The "reason" field is mandatory and must never be empty.
