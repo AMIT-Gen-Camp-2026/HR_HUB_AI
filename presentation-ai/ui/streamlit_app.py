@@ -86,6 +86,28 @@ st.markdown(
     .reason-text { font-size: .85rem; color: #9CA3AF; font-style: italic; margin-top: .3rem; }
     .slide-tag { color: #6B7280; font-size: .78rem; font-weight: 600; }
 
+    .source-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #818CF8;
+        font-size: .75rem;
+        margin: .25rem .3rem .25rem 0;
+        padding: 3px 10px;
+        background: #1A1F35;
+        border: 1px solid #2E3555;
+        border-radius: 999px;
+        text-decoration: none;
+        transition: border-color .15s;
+    }
+    .source-pill:hover { border-color: #818CF8; color: #A5B4FC; }
+
+    .sources-block {
+        margin-top: .6rem;
+        padding-top: .5rem;
+        border-top: 1px solid #1E2438;
+    }
+
     .score-ring {
         text-align: center;
         padding: 1.1rem .5rem;
@@ -133,6 +155,28 @@ def score_color(value: int) -> str:
     return "#EF4444"
 
 
+def _build_evidence_html(evidence_list: list[dict]) -> str:
+    """Returns clean source pills HTML, or empty string if no valid URLs."""
+    pills = "".join(
+        f'<a class="source-pill" href="{e["source_url"]}" target="_blank">'
+        f'🔗 Source {i + 1}'
+        f'</a>'
+        for i, e in enumerate(evidence_list)
+        if e.get("source_url")
+    )
+    if not pills:
+        return ""
+    return f'<div class="sources-block">{pills}</div>'
+
+
+def _render_snippet(snippet: str) -> str:
+    """Strip stray HTML/angle brackets and truncate for safe display."""
+    import re
+    clean = re.sub(r"<[^>]+>", "", snippet)   # strip HTML tags
+    clean = clean.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
+    return clean[:300].strip()
+
+
 # --- Header ------------------------------------------------------------------
 st.markdown(
     '''
@@ -155,9 +199,6 @@ with st.sidebar:
 
 uploaded = st.file_uploader("Upload a .pptx presentation", type=["pptx"])
 
-# --- WORKAROUND: prevent duplicate submissions and only allow one in-flight request at a time ---
-# This does not disable Gemini calls themselves; it avoids accidental repeated clicks/spam,
-# which is the simplest client-side reduction for free-tier quota pressure.
 if uploaded:
     if "analysis_busy" not in st.session_state:
         st.session_state.analysis_busy = False
@@ -245,6 +286,9 @@ if data:
         for v in verifications:
             claim = claims.get(v["claim_id"], {})
             status = v.get("status", "unclear")
+            evidence_list = v.get("evidence", [])
+            evidence_html = _build_evidence_html(evidence_list)
+
             with st.container():
                 st.markdown(
                     f'''
@@ -258,10 +302,24 @@ if data:
                         </span>
                         <div class="claim-text">"{claim.get('text', '')}"</div>
                         <div class="reason-text">{v.get('reason', '')}</div>
+                        {evidence_html}
                     </div>
                     ''',
                     unsafe_allow_html=True,
                 )
+                # Snippet expander — rendered via Streamlit (safe, no raw HTML injection)
+                valid_evidence = [e for e in evidence_list if e.get("source_url")]
+                if valid_evidence:
+                    with st.expander("📄 View sources & snippets", expanded=False):
+                        for i, e in enumerate(valid_evidence):
+                            st.markdown(
+                                f"**Source {i + 1}:** [{e['source_url']}]({e['source_url']})",
+                                unsafe_allow_html=False,
+                            )
+                            if e.get("snippet"):
+                                st.caption(_render_snippet(e["snippet"]))
+                            if i < len(valid_evidence) - 1:
+                                st.divider()
 
     with tab_issues:
         if not issues:
