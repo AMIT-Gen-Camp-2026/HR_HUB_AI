@@ -1,4 +1,4 @@
-﻿"""Minimal internal tool to upload a .pptx and inspect the JSON output while
+"""Minimal internal tool to upload a .pptx and inspect the JSON output while
 developing. NOT the HR-facing product - the actual product is the JSON API
 (app/api/routes_presentation.py). Run with: streamlit run ui/streamlit_app.py
 """
@@ -197,7 +197,7 @@ with st.sidebar:
     for status, color in STATUS_COLORS.items():
         st.markdown(badge(status, color), unsafe_allow_html=True)
 
-uploaded = st.file_uploader("Upload a .pptx presentation", type=["pptx"])
+uploaded = st.file_uploader("Upload a .pptx or .pdf presentation", type=["pptx", "pdf"])
 
 if uploaded:
     if "analysis_busy" not in st.session_state:
@@ -256,6 +256,9 @@ if data:
         )
 
     st.write("")
+    completeness = data.get("completeness") or {}
+    if completeness.get("status") == "no_extractable_content":
+        st.warning("⚠️ No text content could be extracted from this presentation. It may contain only images or scanned slides.")
 
     if score_evidence:
         with st.expander("Why these scores?"):

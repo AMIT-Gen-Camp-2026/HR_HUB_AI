@@ -1,4 +1,4 @@
-"""[AI] Extract + classify claims per slide, batched multiple slides per call. Resilient
+﻿"""[AI] Extract + classify claims per slide, batched multiple slides per call. Resilient
 by design: a malformed response for a batch is logged and skipped rather than
 aborting the whole analysis - a partial report is more useful to HR than none.
 
@@ -15,6 +15,7 @@ import time
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
+from rapidfuzz import fuzz
 
 from app.errors import DailyQuotaExceeded
 from app.pipeline.extract_pptx import SlideContent
@@ -105,6 +106,73 @@ def _coerce_claim(raw: dict | RawClaimOutput, slide_number: int, claim_id: str) 
     )
 
 
+def _slide_has_content(slide: SlideContent) -> bool:
+    if slide.extraction_error:
+        return False
+    return any(el.content.strip() for el in slide.elements) or bool(slide.title and slide.title.strip())
+
+
+def _deduplicate_claims(
+    raw_items: list[tuple],
+    threshold: int,
+) -> list[tuple]:
+    """Remove near-duplicate claims using fuzzy string matching.
+
+    For each candidate, compare against all already-accepted claims.
+    A candidate is a duplicate when:
+      - Its claim_type matches exactly (case-insensitive), AND
+      - rapidfuzz.fuzz.ratio() on the normalised text exceeds *threshold*.
+
+    The first occurrence is always kept; subsequent near-duplicates are discarded.
+    Passing threshold=0 disables deduplication and returns the original list unchanged.
+
+    Args:
+        raw_items: List of (raw_claim, slide_number) pairs assembled from all batches.
+        threshold: Similarity threshold (0-100). 0 means disabled.
+
+    Returns:
+        Filtered list preserving order, with duplicates removed.
+    """
+    if threshold == 0:
+        return raw_items
+
+    accepted: list[tuple] = []
+
+    for item in raw_items:
+        raw, sn = item
+        if isinstance(raw, RawClaimOutput):
+            candidate_text = raw.text.strip().lower()
+            candidate_type = (raw.claim_type or "").strip().lower()
+        else:
+            candidate_text = (raw.get("text") or "").strip().lower()
+            candidate_type = (raw.get("claim_type") or "").strip().lower()
+
+        is_duplicate = False
+        for accepted_raw, _ in accepted:
+            if isinstance(accepted_raw, RawClaimOutput):
+                seen_text = accepted_raw.text.strip().lower()
+                seen_type = (accepted_raw.claim_type or "").strip().lower()
+            else:
+                seen_text = (accepted_raw.get("text") or "").strip().lower()
+                seen_type = (accepted_raw.get("claim_type") or "").strip().lower()
+
+            # Only deduplicate when both text similarity AND claim_type match.
+            if candidate_type == seen_type and fuzz.ratio(candidate_text, seen_text) > threshold:
+                is_duplicate = True
+                break
+
+        if is_duplicate:
+            logger.info(
+                "Deduplicating claim on slide %s (similar to existing claim): %r",
+                sn,
+                candidate_text[:80],
+            )
+        else:
+            accepted.append(item)
+
+    return accepted
+
+
 def extract_claims(
     slides: list[SlideContent],
     provider: ProviderAdapter,
@@ -112,12 +180,20 @@ def extract_claims(
 ) -> tuple[list[Claim], list[int]]:
     claims: list[Claim] = []
     failed_slides: list[int] = []
-    counter = 1
     pacing = get_settings().gemini_call_pacing_seconds
     extraction_calls = 0
 
-    valid_slides = [s for s in slides if slide_to_prompt_text(s).strip()]
+    valid_slides: list[SlideContent] = []
+    for s in slides:
+        if _slide_has_content(s):
+            valid_slides.append(s)
+        else:
+            failed_slides.append(s.slide_number)
+
     batch_size = getattr(get_settings(), "claim_extraction_batch_size", _DEFAULT_BATCH_SIZE)
+
+    # Phase 1 - collect raw items from all batches (no ID assignment yet).
+    raw_items: list[tuple] = []
 
     for batch in _chunk(valid_slides, batch_size):
         if extraction_calls > 0 and pacing > 0:
@@ -139,7 +215,9 @@ def extract_claims(
         try:
             with record_call("claim_extraction", provider.name, "", "claim_extract.v4") as rec:
                 result = provider.complete(
-                    prompt=rendered, response_schema=list[RawClaimOutput]
+                    prompt=rendered,
+                    response_schema=list[RawClaimOutput],
+                    temperature=0.0,
                 )
                 rec.model_version = result.model_version
                 rec.tokens_in, rec.tokens_out = result.tokens_in, result.tokens_out
@@ -168,10 +246,25 @@ def extract_claims(
                 except (TypeError, ValueError):
                     logger.warning("Missing or invalid slide_number %r in raw claim item - skipping", sn)
                     continue
+            raw_items.append((raw, sn))
 
-            claim = _coerce_claim(raw, sn, f"CLM-{counter:03d}")
-            if claim is not None:
-                claims.append(claim)
-                counter += 1
+    # Phase 2 - deduplicate before ID assignment so IDs are always sequential.
+    threshold = getattr(get_settings(), "claim_deduplication_threshold", 90)
+    deduplicated = _deduplicate_claims(raw_items, threshold)
+
+    logger.info(
+        "Claim deduplication: %d claims before, %d after (removed %d duplicates)",
+        len(raw_items),
+        len(deduplicated),
+        len(raw_items) - len(deduplicated),
+    )
+
+    # Phase 3 - coerce + assign sequential IDs.
+    counter = 1
+    for raw, sn in deduplicated:
+        claim = _coerce_claim(raw, sn, f"CLM-{counter:03d}")
+        if claim is not None:
+            claims.append(claim)
+            counter += 1
 
     return claims, failed_slides

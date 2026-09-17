@@ -147,6 +147,8 @@ class CompletenessMeta(BaseModel):
     slides_total: int
     slides_processed: int
     slides_failed: int = 0
+    status: Literal["ok", "partial", "no_extractable_content"] = "ok"
+    message: str | None = None
 
 
 class PresentationAnalysisResult(BaseModel):

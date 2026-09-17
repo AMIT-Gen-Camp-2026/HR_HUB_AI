@@ -177,7 +177,9 @@ def _contextual_judgment(
     )
     try:
         with record_call("plausibility", provider.name, "", "plausibility_judgment.v1") as rec:
-            result = provider.complete(prompt=rendered, response_schema=RawPlausibilityOutput)
+            result = provider.complete(
+                prompt=rendered, response_schema=RawPlausibilityOutput, temperature=0.0
+            )
             rec.model_version = result.model_version
             rec.tokens_in, rec.tokens_out = result.tokens_in, result.tokens_out
 
@@ -240,7 +242,9 @@ def _evaluate_batch_chunk(
     try:
         with record_call("plausibility", provider.name, "", "plausibility_judgment.v2") as rec:
             result = provider.complete(
-                prompt=rendered, response_schema=list[RawPlausibilityItem]
+                prompt=rendered,
+                response_schema=list[RawPlausibilityItem],
+                temperature=0.0,
             )
             rec.model_version = result.model_version
             rec.tokens_in, rec.tokens_out = result.tokens_in, result.tokens_out

@@ -58,11 +58,11 @@ def compute_scores(claims: list[Claim], verifications: list[ClaimVerification]) 
 
     if not scoreable:
         return Scores(
-            overall=100,
-            fact_accuracy=100,
-            verified_ratio=100,
-            evidence_coverage=100,
-            claim_reliability=100,
+            overall=0,
+            fact_accuracy=0,
+            verified_ratio=0,
+            evidence_coverage=0,
+            claim_reliability=0,
         )
 
     total_acc_weight = 0.0

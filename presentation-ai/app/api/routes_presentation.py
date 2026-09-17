@@ -11,8 +11,9 @@ from app.pipeline.run import run_presentation_analysis
 
 presentation_bp = Blueprint("presentation", __name__, url_prefix="/api/v1/presentation")
 
-# Standard ZIP file header magic bytes for .pptx files
+# Standard file header magic bytes
 _ZIP_MAGIC_BYTES = b"PK\x03\x04"
+_PDF_MAGIC_BYTES = b"%PDF-"
 
 
 @presentation_bp.post("/analyze")
@@ -22,17 +23,20 @@ def analyze():
 
     uploaded = request.files["file"]
     safe_filename = secure_filename(uploaded.filename) or "presentation.pptx"
+    filename_lower = uploaded.filename.lower()
 
-    if not uploaded.filename.lower().endswith(".pptx"):
-        raise UnsupportedFormat("Only .pptx files are supported.")
+    if not (filename_lower.endswith(".pptx") or filename_lower.endswith(".pdf")):
+        raise UnsupportedFormat("Only .pptx and .pdf files are supported.")
 
     content = uploaded.read()
     if not content:
         raise InvalidFile("The uploaded file is empty.")
 
-    # Validate zip container magic signature
-    if not content.startswith(_ZIP_MAGIC_BYTES):
+    # Validate file magic signatures
+    if filename_lower.endswith(".pptx") and not content.startswith(_ZIP_MAGIC_BYTES):
         raise CorruptedFile("The uploaded file is not a valid PowerPoint archive.")
+    if filename_lower.endswith(".pdf") and not content.startswith(_PDF_MAGIC_BYTES):
+        raise CorruptedFile("The uploaded file is not a valid PDF document.")
 
     result = run_presentation_analysis(
         filename=safe_filename,

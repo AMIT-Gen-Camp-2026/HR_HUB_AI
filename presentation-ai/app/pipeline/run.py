@@ -3,8 +3,11 @@ to read first to understand the whole flow (docs/DECISIONS.md section 8).
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 import uuid
+
+from cachetools import LRUCache
 
 from app.errors import (
     AppError,
@@ -12,9 +15,19 @@ from app.errors import (
     CorruptedFile,
     ExtractionFailed,
     FactCheckFailed,
+    InvalidFile,
     ScoringFailed,
 )
-from app.pipeline import claim_extraction, extract_pptx, fact_check, normalize, postprocess, report_summary, scoring
+from app.pipeline import (
+    claim_extraction,
+    extract_pdf,
+    extract_pptx,
+    fact_check,
+    normalize,
+    postprocess,
+    report_summary,
+    scoring,
+)
 from app.prompts.registry import PromptRegistry
 from app.providers.base import ProviderAdapter
 from app.schemas.presentation import (
@@ -27,6 +40,23 @@ from config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
+# In-memory result cache resets on server restart by design.
+_RESULT_CACHE: LRUCache = LRUCache(maxsize=50)
+
+
+def _get_result_cache(max_size: Any) -> LRUCache:
+    global _RESULT_CACHE
+    if not isinstance(max_size, int) or max_size <= 0:
+        size = 50
+    else:
+        size = max_size
+    if _RESULT_CACHE.maxsize != size:
+        new_cache: LRUCache = LRUCache(maxsize=size)
+        for k, v in _RESULT_CACHE.items():
+            new_cache[k] = v
+        _RESULT_CACHE = new_cache
+    return _RESULT_CACHE
+
 
 def run_presentation_analysis(
     *,
@@ -38,9 +68,24 @@ def run_presentation_analysis(
     applicant_id: str | None = None,
     job_id: str | None = None,
 ) -> PresentationAnalysisResult:
+    file_hash = hashlib.sha256(content).hexdigest()
+    use_cache = bool(getattr(settings, "enable_result_cache", True) is True)
+    if use_cache:
+        cache = _get_result_cache(getattr(settings, "result_cache_max_size", 50))
+        if file_hash in cache:
+            logger.info("Cache hit for %s (hash %s)", filename, file_hash[:8])
+            return cache[file_hash]
     # --- Extraction (deterministic) ---
+    is_pdf = filename.lower().endswith(".pdf") or content.startswith(b"%PDF-")
     try:
-        extracted = extract_pptx.extract(content)
+        if is_pdf:
+            extracted = extract_pdf.extract_pdf(content)
+        else:
+            extracted = extract_pptx.extract(content)
+    except extract_pdf.PdfEncryptedError as exc:
+        raise InvalidFile("The uploaded PDF file is password-protected.") from exc
+    except extract_pdf.PdfPackageCorrupted as exc:
+        raise CorruptedFile(f"The uploaded file is not a valid PDF package: {exc}") from exc
     except extract_pptx.PptxPackageCorrupted as exc:
         raise CorruptedFile("The uploaded file is not a valid .pptx package.") from exc
     except AppError:
@@ -113,15 +158,27 @@ def run_presentation_analysis(
     slides_failed_count = len(all_failed_slides)
     slides_processed_count = max(0, extracted.slide_count - slides_failed_count)
 
+    if slides_processed_count == 0 or extracted.slide_count == 0:
+        comp_status = "no_extractable_content"
+        comp_message = "No text content could be extracted from this presentation. It may contain only images."
+    elif slides_failed_count > 0:
+        comp_status = "partial"
+        comp_message = f"{slides_failed_count} slide(s) contained no extractable text."
+    else:
+        comp_status = "ok"
+        comp_message = None
+
     completeness = CompletenessMeta(
         slides_total=extracted.slide_count,
         slides_processed=slides_processed_count,
         slides_failed=slides_failed_count,
+        status=comp_status,
+        message=comp_message,
     )
 
     status = "completed" if slides_failed_count == 0 else "partial"
 
-    return PresentationAnalysisResult(
+    result = PresentationAnalysisResult(
         analysis_id=f"ANL-{uuid.uuid4().hex[:12]}",
         status=status,
         completeness=completeness,
@@ -135,3 +192,9 @@ def run_presentation_analysis(
         issues=issues,
         suggested_interview_questions=interview_questions,
     )
+
+    if use_cache:
+        cache = _get_result_cache(getattr(settings, "result_cache_max_size", 50))
+        cache[file_hash] = result
+
+    return result

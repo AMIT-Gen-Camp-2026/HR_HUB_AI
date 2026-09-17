@@ -61,14 +61,17 @@ def test_not_checkable_is_excluded_entirely():
     assert scores.fact_accuracy == 100
 
 
-def test_empty_scoreable_list_returns_clean_pass():
+def test_empty_scoreable_list_returns_zero():
+    # PR_BUG_001: when all claims are not_checkable the scoreable list is empty.
+    # The corrected behavior returns 0 across all scores (not 100) so that
+    # image-only / no-content presentations are not falsely reported as perfect.
     claims = [_claim('c1')]
     verifications = [
         ClaimVerification(claim_id='c1', status='not_checkable', confidence=0.0, reason='opinion', evidence=[]),
     ]
     scores = compute_scores(claims, verifications)
-    assert scores.overall == 100
-    assert scores.verified_ratio == 100
+    assert scores.overall == 0
+    assert scores.verified_ratio == 0
 
 
 def test_graduated_scoring_for_self_reported_and_math_claims():

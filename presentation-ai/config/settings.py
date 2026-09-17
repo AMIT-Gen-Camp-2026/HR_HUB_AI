@@ -55,12 +55,25 @@ class Settings(BaseSettings):
     # --- feature flags ---
     feature_image_analysis: bool = False
     feature_web_grounding: bool = True
+    pdf_ocr_enabled: bool = False
+    pdf_max_pages: int = 100
+
+    # --- caching ---
+    enable_result_cache: bool = True
+    result_cache_max_size: int = 50
 
     # --- free-tier guardrails (docs/DECISIONS.md section 6) ---
     daily_request_cap: int = 1200
     gemini_call_pacing_seconds: float = 8.0  # delay between consecutive Gemini calls, see docs/DECISIONS.md section 18
     claim_batch_size: int = 5
     claim_extraction_batch_size: int = 4
+
+    # --- claim deduplication (PR_BUG_003) ---
+    # Fuzzy similarity threshold (0-100) used to suppress near-duplicate claims.
+    # Two claims are considered duplicates when rapidfuzz.fuzz.ratio() exceeds
+    # this value AND their claim_type matches exactly.
+    # Set to 0 to disable deduplication entirely and keep all extracted claims.
+    claim_deduplication_threshold: int = 90
 
     # --- flask ---
     api_port: int = 8100

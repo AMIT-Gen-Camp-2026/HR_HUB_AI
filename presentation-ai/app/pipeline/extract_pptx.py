@@ -116,6 +116,12 @@ def extract(file_bytes: bytes) -> ExtractedPresentation:
             slide_err = str(exc)
             failed_slides.append(idx)
 
+        if not elements and title is None:
+            if slide_err is None:
+                slide_err = "slide_contains_no_extractable_text"
+            if idx not in failed_slides:
+                failed_slides.append(idx)
+
         slides.append(SlideContent(slide_number=idx, title=title, elements=elements, extraction_error=slide_err))
 
     return ExtractedPresentation(slide_count=len(slides), slides=slides, failed_slide_numbers=failed_slides)

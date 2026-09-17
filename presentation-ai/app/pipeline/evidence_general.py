@@ -114,6 +114,7 @@ def verify(
                 prompt=rendered,
                 response_schema=FACT_CHECK_RESPONSE_SCHEMA,
                 use_grounding=not use_tavily,
+                temperature=0.0,
             )
             rec.model_version = result.model_version
             rec.tokens_in, rec.tokens_out = result.tokens_in, result.tokens_out

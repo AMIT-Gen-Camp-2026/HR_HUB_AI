@@ -40,22 +40,29 @@ def test_extract_claims_batching_respects_batch_size():
         SlideContent(slide_number=i, title=f"Slide {i}", elements=[SlideElement(type="text", content=f"Slide text {i}")])
         for i in range(1, 8)
     ]
-    
+
+    call_counter = {"n": 0}
+
+    def _distinct_per_batch(prompt, response_schema=None, **kwargs):
+        """Return a unique claim per batch so dedup does not collapse them."""
+        call_counter["n"] += 1
+        return MagicMock(
+            text=json.dumps([
+                {
+                    "slide_number": call_counter["n"],
+                    "text": f"Unique claim for batch {call_counter['n']}",
+                    "claim_type": "performance",
+                    "track": "project_specific",
+                }
+            ]),
+            model_version="mock-v1",
+            tokens_in=10,
+            tokens_out=10,
+        )
+
     mock_provider = MagicMock()
     mock_provider.name = "mock"
-    mock_provider.complete.side_effect = lambda prompt, response_schema=None: MagicMock(
-        text=json.dumps([
-            {
-                "slide_number": 1,
-                "text": "Claim 1",
-                "claim_type": "performance",
-                "track": "project_specific",
-            }
-        ]),
-        model_version="mock-v1",
-        tokens_in=10,
-        tokens_out=10,
-    )
+    mock_provider.complete.side_effect = _distinct_per_batch
 
     prompts = MagicMock()
     prompts.render.return_value = "rendered prompt"
@@ -63,6 +70,7 @@ def test_extract_claims_batching_respects_batch_size():
     settings = MagicMock(spec=Settings)
     settings.gemini_call_pacing_seconds = 0.0
     settings.claim_extraction_batch_size = 3
+    settings.claim_deduplication_threshold = 0  # disabled so distinct claims are not collapsed
 
     with patch("app.pipeline.claim_extraction.get_settings", return_value=settings):
         claims, failed_slides = extract_claims(slides, mock_provider, prompts)
