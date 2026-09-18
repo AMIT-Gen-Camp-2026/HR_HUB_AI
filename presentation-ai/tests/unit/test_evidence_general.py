@@ -137,7 +137,14 @@ def test_tavily_empty_results_reuses_existing_quota_fallback(monkeypatch):
     monkeypatch.setattr("app.pipeline.evidence_general.TavilySearchProvider", lambda _: tavily)
 
     result = verify(
-        _claim(), MagicMock(), _prompts(), Settings(search_provider="tavily", tavily_api_key="test-key")
+        _claim(),
+        MagicMock(),
+        _prompts(),
+        Settings(
+            search_provider="tavily",
+            tavily_api_key="test-key",
+            enable_academic_search=False,
+        ),
     )
 
     assert result.status == "unclear"
