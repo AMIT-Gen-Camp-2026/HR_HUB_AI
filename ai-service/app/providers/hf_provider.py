@@ -1,34 +1,15 @@
 """
-models/qwen_model.py
+app/providers/hf_provider.py
 
-الملف الوحيد في المشروع اللي "بيعرف" إزاي نتكلم مع الموديل فعليًا.
-باقي المشروع (services/, app.py) بيتكلم مع الدالة query_model() بس،
-وميعرفش تفاصيل إن إحنا بنستخدم Hugging Face Inference Providers،
-ولا إن فيه أكتر من موديل واحد بيتم المحاولة عليهم.
-
---- Multi-Model Fallback ---
-جهازنا شغال على Inference Providers سحابية (مش موديل محلي)، وده معناه
-إننا عرضة لـ rate limits / quota errors / انقطاع مؤقت في provider معين.
-عشان كده config.MODEL_CHAIN بيحتوي على أكتر من موديل بالترتيب، ولو موديل
-فشل لأي سبب (rate limit، auth، timeout، أي استثناء) بننتقل للي بعده في
-السلسلة تلقائيًا. آخر محاولة بتكون إعادة محاولة الموديل الأساسي (Primary)
-تاني - على فرض إن المشكلة كانت مؤقتة وخلصت.
-
---- تحديث: الفشل بيشمل دلوقتي فشل الـ output نفسه، مش بس فشل الاتصال ---
-في الأول، الـ chain كانت بتعتبر المحاولة "نجحت" بمجرد ما الموديل يرد بأي
-نص، حتى لو النص ده JSON تالف/مبتور. المشكلة إن ده معناه لو الموديل
-الأساسي (الأصغر عادةً) رجّع output غير صالح، النظام كان بيفشل على طول
-من غير ما يجرب باقي السلسلة - يعني الـ fallback مكنش بيتفعّل فعليًا في
-أكتر الحالات اللي محتاجينه فيها.
-
-دلوقتي query_model() بتاخد validate_fn اختيارية: لو اتبعتت، بيتم تطبيقها
-على output كل موديل، ولو فشلت (رمت أي Exception)، بيتم اعتبار المحاولة
-دي فاشلة والانتقال للموديل اللي بعده - بالظبط زي فشل الاتصال تمامًا.
+مسؤول عن التواصل مع الموديلات لاستخراج بيانات الـ CV (Extraction)
+مع دعم Fallback تلقائي متعدد المزودين (Multi-Provider Fallback):
+Gemini, Groq, OpenRouter, و Hugging Face Inference Providers.
 """
 
 import logging
 from typing import Callable, TypeVar
 
+import httpx
 from huggingface_hub import InferenceClient
 from huggingface_hub.errors import HfHubHTTPError
 
@@ -40,35 +21,105 @@ T = TypeVar("T")
 
 
 class ModelInferenceError(Exception):
-    """بترفع لو حصلت أي مشكلة أثناء استدعاء الموديل (شبكة، auth، rate limit، إلخ)."""
+    """بترفع لو حصلت أي مشكلة أثناء استدعاء الموديل (شبكة، auth، rate limit، quota، إلخ)."""
     pass
 
 
-# Cache للـ clients - واحد لكل provider (مش لكل موديل، لإن provider واحد
-# ممكن يخدم أكتر من موديل بنفس الـ client)
-_clients: dict[str, InferenceClient] = {}
+# Cache للـ clients بتوع Hugging Face
+_hf_clients: dict[str, InferenceClient] = {}
 
 
-def _get_client(provider: str) -> InferenceClient:
-    """بترجع نسخة مشتركة من InferenceClient لكل provider (lazy, cached)."""
-    if provider not in _clients:
+def _get_hf_client(provider: str) -> InferenceClient:
+    """بترجع نسخة مشتركة من InferenceClient لكل provider في Hugging Face."""
+    if provider not in _hf_clients:
         if not config.HF_API_TOKEN:
             raise ModelInferenceError(
-                "HF_API_TOKEN مش موجود. تأكد من ملف .env"
+                "HF_API_TOKEN مش موجود في .env"
             )
-        _clients[provider] = InferenceClient(
-            provider=provider,  # صريح، مش "auto" - راجع ملحوظة الموديل القديم
+        _hf_clients[provider] = InferenceClient(
+            provider=provider,
             api_key=config.HF_API_TOKEN,
             timeout=config.MODEL_TIMEOUT_SECONDS,
         )
-    return _clients[provider]
+    return _hf_clients[provider]
 
 
-def _call_model(repo_id: str, provider: str, system_prompt: str, user_prompt: str) -> str:
-    """
-    محاولة واحدة لاستدعاء موديل واحد بعينه.
-    """
-    client = _get_client(provider)
+def _call_gemini(model: str, system_prompt: str, user_prompt: str) -> str:
+    """استدعاء Google Gemini API بنمط JSON مباشر."""
+    if not config.GEMINI_API_KEY:
+        raise ModelInferenceError("GEMINI_API_KEY غير متوفر في .env")
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    payload = {
+        "system_instruction": {"parts": [{"text": system_prompt}]},
+        "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
+        "generationConfig": {
+            "temperature": 0.0,
+            "seed": 42,
+            "responseMimeType": "application/json",
+        },
+    }
+
+    try:
+        with httpx.Client(timeout=config.MODEL_TIMEOUT_SECONDS) as client:
+            response = client.post(
+                url,
+                headers={"x-goog-api-key": config.GEMINI_API_KEY},
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        raise ModelInferenceError(f"فشل الاتصال بـ Gemini ({model}): {e}") from e
+
+
+def _call_openai_compatible(
+    provider_name: str,
+    model: str,
+    base_url: str,
+    api_key: str,
+    system_prompt: str,
+    user_prompt: str,
+    extra_headers: dict[str, str] | None = None,
+) -> str:
+    """استدعاء أي مزود متوافق مع OpenAI chat completions (Groq / OpenRouter)."""
+    if not api_key:
+        raise ModelInferenceError(f"مفتاح {provider_name.upper()}_API_KEY غير متوفر.")
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        **(extra_headers or {}),
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": 0.0,
+        "seed": 42,
+        "response_format": {"type": "json_object"},
+    }
+
+    try:
+        with httpx.Client(timeout=config.MODEL_TIMEOUT_SECONDS) as client:
+            response = client.post(
+                f"{base_url.rstrip('/')}/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        raise ModelInferenceError(f"فشل الاتصال بـ {provider_name} ({model}): {e}") from e
+
+
+def _call_hf(repo_id: str, provider: str, system_prompt: str, user_prompt: str) -> str:
+    """استدعاء Hugging Face Inference Providers."""
+    client = _get_hf_client(provider)
 
     try:
         response = client.chat.completions.create(
@@ -78,8 +129,9 @@ def _call_model(repo_id: str, provider: str, system_prompt: str, user_prompt: st
                 {"role": "user", "content": user_prompt},
             ],
             max_tokens=config.MAX_NEW_TOKENS,
-                response_format={"type": "json_object"},
+            response_format={"type": "json_object"},
             temperature=0.0,
+            seed=42,
         )
     except HfHubHTTPError as e:
         raise ModelInferenceError(f"فشل الاتصال بـ {repo_id} عبر {provider}: {e}") from e
@@ -96,6 +148,67 @@ def _call_model(repo_id: str, provider: str, system_prompt: str, user_prompt: st
     return content
 
 
+def _call_model(repo_id: str, provider: str, system_prompt: str, user_prompt: str) -> str:
+    """
+    نقطة الاستدعاء الموحدة التي توجه الطلب للمزود المطلوب:
+    - provider == "gemini": Google Gemini API
+    - provider == "groq": Groq API
+    - provider == "openrouter": OpenRouter API
+    - أي مزود آخر: Hugging Face Inference Provider
+    """
+    if provider == "gemini":
+        return _call_gemini(repo_id, system_prompt, user_prompt)
+    elif provider == "groq":
+        return _call_openai_compatible(
+            "groq", repo_id, config.GROQ_BASE_URL, config.GROQ_API_KEY, system_prompt, user_prompt
+        )
+    elif provider == "openrouter":
+        return _call_openai_compatible(
+            "openrouter",
+            repo_id,
+            config.OPENROUTER_BASE_URL,
+            config.OPENROUTER_API_KEY,
+            system_prompt,
+            user_prompt,
+            {"HTTP-Referer": config.OPENROUTER_SITE_URL, "X-Title": "HR Hub AI"},
+        )
+    else:
+        return _call_hf(repo_id, provider, system_prompt, user_prompt)
+
+
+def _build_model_chain() -> list[dict[str, str]]:
+    """يبني سلسلة الموديلات بناءً على التفضيل والمفاتيح المتوفرة."""
+    pref = (getattr(config, "EXTRACTION_PROVIDER", "auto") or "auto").lower().strip()
+
+    if pref == "hf":
+        return list(config.MODEL_CHAIN)
+    elif pref == "gemini" and config.GEMINI_API_KEY:
+        chain = [{"repo_id": config.GEMINI_EXTRACTION_MODEL, "provider": "gemini"}]
+        if config.GROQ_API_KEY:
+            chain.append({"repo_id": config.GROQ_EXTRACTION_MODEL, "provider": "groq"})
+        return chain
+    elif pref == "groq" and config.GROQ_API_KEY:
+        chain = [{"repo_id": config.GROQ_EXTRACTION_MODEL, "provider": "groq"}]
+        if config.GEMINI_API_KEY:
+            chain.append({"repo_id": config.GEMINI_EXTRACTION_MODEL, "provider": "gemini"})
+        return chain
+    elif pref == "openrouter" and config.OPENROUTER_API_KEY:
+        return [{"repo_id": config.OPENROUTER_EXTRACTION_MODEL, "provider": "openrouter"}]
+
+    # Auto mode: build fallback chain across available providers
+    chain: list[dict[str, str]] = []
+    if config.GEMINI_API_KEY:
+        chain.append({"repo_id": getattr(config, "GEMINI_EXTRACTION_MODEL", "gemini-3.6-flash"), "provider": "gemini"})
+    if config.GROQ_API_KEY:
+        chain.append({"repo_id": getattr(config, "GROQ_EXTRACTION_MODEL", "openai/gpt-oss-120b"), "provider": "groq"})
+    if config.OPENROUTER_API_KEY:
+        chain.append({"repo_id": getattr(config, "OPENROUTER_EXTRACTION_MODEL", "meta-llama/llama-3.3-70b-instruct"), "provider": "openrouter"})
+    if config.HF_API_TOKEN and config.MODEL_CHAIN:
+        chain.extend(config.MODEL_CHAIN)
+
+    return chain or list(config.MODEL_CHAIN)
+
+
 def query_model(
     system_prompt: str,
     user_prompt: str,
@@ -103,32 +216,22 @@ def query_model(
     metadata: dict[str, object] | None = None,
 ) -> T | str:
     """
-    بتبعت الـ prompts للموديل الأساسي، ولو فشل (اتصال أو validation) بتجرب
-    اللي بعده في config.MODEL_CHAIN، وآخر حاجة بتعيد محاولة الأساسي تاني.
-
-    ترتيب المحاولات (لسلسلة من موديلين): Primary -> Fallback -> Primary (retry)
+    بتبعت الـ prompts للموديل الأساسي، ولو فشل (اتصال، حصة/quota، أو validation)
+    بتجرب المزود التالي في السلسلة تلقائيًا.
 
     Args:
         system_prompt: الـ system prompt.
         user_prompt: الـ user prompt.
-        validate_fn: دالة اختيارية بتاخد الـ raw content النصي من الموديل
-            وترجع أي حاجة (مثلاً dict بعد parsing + validation). لو رمت
-            Exception، المحاولة دي بتتحسب فاشلة زي فشل الاتصال بالظبط،
-            وبننتقل للموديل اللي بعده في السلسلة. لو مبعتتش، بترجع النص
-            الخام زي ما هو (السلوك القديم).
-
-    Returns:
-        لو فيه validate_fn: نتيجة استدعاءها الناجح.
-        لو مفيش: النص الخام من الموديل.
-
-    Raises:
-        ModelInferenceError: لو فشلت كل المحاولات (اتصال أو validation).
+        validate_fn: دالة اختيارية للتحقق من الناتج وتحويله لـ schema.
+        metadata: قاموس لتسجيل الموديل والمزود المستخدم وعدد المحاولات.
     """
-    chain = config.MODEL_CHAIN
+    chain = _build_model_chain()
     if not chain:
-        raise ModelInferenceError("MODEL_CHAIN فاضية - مفيش موديل نجرب عليه.")
+        raise ModelInferenceError("MODEL_CHAIN فاضية ومفيش أي API key متوفر.")
 
-    attempt_order = list(chain) + [chain[0]]
+    attempt_order = list(chain)
+    if len(chain) == 1:
+        attempt_order.append(chain[0])
 
     if metadata is not None:
         metadata.clear()
@@ -170,8 +273,8 @@ def query_model(
 
             if attempt_num > 1:
                 logger.warning(
-                    "تم الرد بنجاح من %s بعد %d محاولة/محاولات فاشلة",
-                    repo_id, attempt_num - 1,
+                    "تم الرد بنجاح من %s (%s) بعد %d محاولة/محاولات فاشلة",
+                    repo_id, provider, attempt_num - 1,
                 )
             if metadata is not None:
                 metadata.update(

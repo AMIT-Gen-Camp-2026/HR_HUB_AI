@@ -20,7 +20,40 @@ class Config:
     # لو سايبه فاضي، الـ endpoints بتفضل شغالة من غير حماية - مقبول للتطوير
     # المحلي بس، خطر لو السيرفر متاح لغير جهازك.
     AI_SERVICE_API_KEY: str = os.getenv("AI_SERVICE_API_KEY", "")
+
+    # Semantic judge providers. Empty keys disable that provider in the chain.
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
+    GEMINI_JUDGE_MODEL: str = os.getenv("GEMINI_JUDGE_MODEL", "gemini-3.6-flash")
+    GROQ_JUDGE_MODEL: str = os.getenv("GROQ_JUDGE_MODEL", "openai/gpt-oss-120b")
+    OPENROUTER_JUDGE_MODEL: str = os.getenv(
+        "OPENROUTER_JUDGE_MODEL", "meta-llama/llama-3.3-70b-instruct:free"
+    )
+    GROQ_BASE_URL: str = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+    OPENROUTER_BASE_URL: str = os.getenv(
+        "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+    )
+    OPENROUTER_SITE_URL: str = os.getenv("OPENROUTER_SITE_URL", "http://localhost")
+    JUDGE_TIMEOUT_SECONDS: int = int(os.getenv("JUDGE_TIMEOUT_SECONDS", "60"))
+
+    CACHE_TTL_SECONDS: int = int(os.getenv("CACHE_TTL_SECONDS", "3600"))
+    CACHE_MAX_ENTRIES: int = int(os.getenv("CACHE_MAX_ENTRIES", "128"))
     
+    # ============================================================
+    # Extraction Settings & Multi-Provider Support
+    # ============================================================
+    EXTRACTION_PROVIDER: str = os.getenv("EXTRACTION_PROVIDER", "auto")
+    GEMINI_EXTRACTION_MODEL: str = os.getenv(
+        "GEMINI_EXTRACTION_MODEL", "gemini-3.6-flash"
+    )
+    GROQ_EXTRACTION_MODEL: str = os.getenv(
+        "GROQ_EXTRACTION_MODEL", "openai/gpt-oss-120b"
+    )
+    OPENROUTER_EXTRACTION_MODEL: str = os.getenv(
+        "OPENROUTER_EXTRACTION_MODEL", "meta-llama/llama-3.3-70b-instruct"
+    )
+
     # ============================================================
     # Hugging Face
     # ============================================================
@@ -28,12 +61,6 @@ class Config:
 
     # سلسلة الموديلات بالترتيب - لو الأول فشل بسبب quota/rate-limit
     # (402 Payment Required / 429 Too Many Requests)، بنجرب اللي بعده.
-    #
-    # مهم: كل (repo_id, provider) لازم يكونوا متأكدين إنهم متاحين مع بعض
-    # فعليًا على HF Inference Providers. تأكد من صفحة الموديل على
-    # huggingface.co (تبويب "Inference Providers") قبل ما تضيف عنصر هنا -
-    # الدعم ده بيتغير مع الوقت (مثال: Mistral-7B-Instruct-v0.3 مش مدعوم
-    # بأي provider حاليًا، لكن v0.2 مدعوم عن طريق Featherless AI).
     MODEL_CHAIN: list[dict[str, str]] = [
         {
             "repo_id": os.getenv("HF_MODEL_ID_1", "Qwen/Qwen2.5-3B-Instruct"),
@@ -69,17 +96,27 @@ class Config:
     # ============================================================
     RANKING_ENABLED: bool = os.getenv("RANKING_ENABLED", "True").lower() == "true"
 
+    @property
+    def JUDGE_MODEL_CHAIN(self) -> list[dict[str, str]]:
+        return [
+            {"provider": "gemini", "model": self.GEMINI_JUDGE_MODEL},
+            {"provider": "groq", "model": self.GROQ_JUDGE_MODEL},
+            {"provider": "openrouter", "model": self.OPENROUTER_JUDGE_MODEL},
+        ]
+
     @classmethod
     def validate(cls) -> None:
-        """بتتأكد إن الإعدادات الأساسية موجودة قبل ما نشغّل السيرفر."""
-        if not cls.HF_API_TOKEN:
+        """بتتأكد إن الإعدادات الأساسية ومفتاح واحد على الأقل موجود قبل ما نشغّل السيرفر."""
+        has_any_key = bool(
+            cls.GEMINI_API_KEY
+            or cls.GROQ_API_KEY
+            or cls.OPENROUTER_API_KEY
+            or cls.HF_API_TOKEN
+        )
+        if not has_any_key:
             raise RuntimeError(
-                "HF_API_TOKEN مش موجود. تأكد إنك حاطط التوكن بتاعك في ملف .env "
-                "بالشكل ده: HF_API_TOKEN=hf_xxxxxxxxxxxx"
-            )
-        if not cls.MODEL_CHAIN:
-            raise RuntimeError(
-                "MODEL_CHAIN فاضية - لازم يكون فيه موديل واحد على الأقل."
+                "لم يتم العثور على أي API Key للموديل. تأكد من إعداد أحد المفاتيح التالية في .env: "
+                "GEMINI_API_KEY أو GROQ_API_KEY أو OPENROUTER_API_KEY أو HF_API_TOKEN"
             )
 
 

@@ -11,16 +11,15 @@ import json
 import pytest
 
 from app import main
-from app.pipeline import ranking
 from app.providers.hf_provider import ModelInferenceError
-from app.schemas.cv import CVSchema
+from app.schemas.cv import CVSchema, RankingResult
 
 
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(ranking, "semantic_fit", lambda cv, jd: 0.5)
     monkeypatch.setattr(main.config, "RANKING_ENABLED", True)
     monkeypatch.setattr(main.config, "AI_SERVICE_API_KEY", "")
+    monkeypatch.setattr(main.limiter, "enabled", False)
     return main.app.test_client()
 
 
@@ -40,6 +39,14 @@ def _multipart_data(file_bytes: bytes | None = None, job_description: dict | Non
     }
 
 
+def _ranking_result() -> RankingResult:
+    return RankingResult(
+        score=50.0,
+        skill_evaluations=[],
+        breakdown={"required_skills_total": 3},
+    )
+
+
 def test_evaluate_returns_cv_and_ranking_for_valid_payload(client, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
     monkeypatch.setattr(
@@ -51,7 +58,7 @@ def test_evaluate_returns_cv_and_ranking_for_valid_payload(client, monkeypatch: 
             personal_info={"name": "Jane Doe"},
         ),
     )
-    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: ranking.rank(candidate, job_description))
+    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: _ranking_result())
 
     response = client.post("/api/v1/cv/evaluate", data=_multipart_data(), content_type="multipart/form-data")
 
@@ -59,9 +66,8 @@ def test_evaluate_returns_cv_and_ranking_for_valid_payload(client, monkeypatch: 
     body = response.get_json()
     assert body["success"] is True
     assert body["cv"]["skills"] == ["Python", "SQL"]
-    assert body["ranking"]["matched_skills"] == ["Python", "SQL"]
-    assert body["ranking"]["missing_skills"] == ["Tableau"]
-    assert 0.0 < body["ranking"]["score"] < 100.0
+    assert body["ranking"]["skill_evaluations"] == []
+    assert body["ranking"]["score"] == 50.0
 
 
 def test_evaluate_rejects_missing_job_description(client) -> None:
@@ -159,7 +165,7 @@ def test_evaluate_does_not_rank_empty_extraction(client, monkeypatch: pytest.Mon
 def test_evaluate_exposes_extraction_metadata(client, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
     monkeypatch.setattr(main, "clean_and_query", lambda raw_text: CVSchema(skills=["Python"]))
-    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: ranking.rank(candidate, job_description))
+    monkeypatch.setattr(main, "compute_ranking", lambda candidate, job_description: _ranking_result())
 
     response = client.post(
         "/api/v1/cv/evaluate", data=_multipart_data(), content_type="multipart/form-data"
@@ -167,3 +173,168 @@ def test_evaluate_exposes_extraction_metadata(client, monkeypatch: pytest.Monkey
 
     assert response.status_code == 200
     assert isinstance(response.get_json()["extraction_metadata"], dict)
+
+
+def test_evaluate_accepts_and_executes_semantic_matching_mode(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    """API endpoint correctly parses matching_mode='semantic' and propagates it to ranking layer."""
+    received_mode: list[str] = []
+
+    def mock_compute_ranking(candidate, jd):
+        received_mode.append(jd.matching_mode)
+        return RankingResult(
+            score=85.0,
+            skill_evaluations=[],
+            breakdown={
+                "scoring_version": "weighted-70-20-10-v1",
+                "judge_prompt_version": "semantic-judge-v1",
+                "fallback_to_taxonomy": False,
+            },
+        )
+
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(main, "clean_and_query", lambda raw_text: CVSchema(skills=["Python"]))
+    monkeypatch.setattr(main, "compute_ranking", mock_compute_ranking)
+
+    jd_payload = {
+        "title": "Data Analyst",
+        "required_skills": ["Python", "SQL"],
+        "matching_mode": "semantic",
+    }
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data=_multipart_data(job_description=jd_payload),
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["success"] is True
+    assert received_mode == ["semantic"]
+    assert body["ranking"]["score"] == 85.0
+    assert body["ranking"]["breakdown"]["judge_prompt_version"] == "semantic-judge-v1"
+    assert body["ranking"]["breakdown"]["fallback_to_taxonomy"] is False
+
+
+def test_evaluate_rejects_invalid_matching_mode(client) -> None:
+    """API endpoint rejects invalid matching_mode (e.g. 'fuzzy') with HTTP 422 validation error."""
+    jd_payload = {
+        "title": "Data Analyst",
+        "required_skills": ["Python"],
+        "matching_mode": "fuzzy",
+    }
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data=_multipart_data(job_description=jd_payload),
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 422
+    body = response.get_json()
+    assert body["success"] is False
+
+
+def test_evaluate_taxonomy_mode_returns_fallback_to_taxonomy_false(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    """API endpoint in default/taxonomy mode returns breakdown with fallback_to_taxonomy: False."""
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(main, "clean_and_query", lambda raw_text: CVSchema(skills=["Python"]))
+    monkeypatch.setattr(
+        main,
+        "compute_ranking",
+        lambda candidate, jd: RankingResult(
+            score=70.0,
+            skill_evaluations=[],
+            breakdown={
+                "scoring_version": "weighted-70-20-10-v1",
+                "judge_prompt_version": "ranking-judge-v1",
+                "fallback_to_taxonomy": False,
+            },
+        ),
+    )
+
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data=_multipart_data(),
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["success"] is True
+    assert body["ranking"]["breakdown"]["fallback_to_taxonomy"] is False
+
+
+def test_evaluate_rejects_malformed_json_job_description(client) -> None:
+    """Endpoint returns 400 when job_description is not valid JSON."""
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data={
+            "file": (io.BytesIO(b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"), "candidate.pdf", "application/pdf"),
+            "job_description": "not-valid-json",
+        },
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "job_description must be valid JSON."
+
+
+def test_evaluate_rejects_non_dict_json_job_description(client) -> None:
+    """Endpoint returns 400 when job_description JSON is not a JSON object."""
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data={
+            "file": (io.BytesIO(b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"), "candidate.pdf", "application/pdf"),
+            "job_description": json.dumps(["not", "a", "dict"]),
+        },
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "job_description must be a JSON object."
+
+
+def test_evaluate_rejects_empty_filename(client) -> None:
+    """Endpoint returns 400 when file has an empty filename."""
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data={
+            "file": (io.BytesIO(b"data"), "", "application/pdf"),
+            "job_description": json.dumps(_job_description()),
+        },
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "No file selected."
+
+
+def test_evaluate_rejects_missing_file_field(client) -> None:
+    """Endpoint returns 400 when 'file' field is missing from form-data."""
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data={"job_description": json.dumps(_job_description())},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "No 'file' field in form-data."
+
+
+def test_evaluate_handles_ranking_judge_error(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Endpoint returns 502 when compute_ranking encounters a JudgeProviderError."""
+    from app.providers.judge_provider import JudgeProviderError
+
+    monkeypatch.setattr(main, "extract_raw_text", lambda filepath, ext: "CV text")
+    monkeypatch.setattr(main, "clean_and_query", lambda raw_text: CVSchema(skills=["Python"]))
+    monkeypatch.setattr(
+        main,
+        "compute_ranking",
+        lambda candidate, jd: (_ for _ in ()).throw(JudgeProviderError("All providers failed")),
+    )
+
+    response = client.post(
+        "/api/v1/cv/evaluate",
+        data=_multipart_data(),
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 502
+    body = response.get_json()
+    assert body["success"] is False
+    assert "Ranking model inference failed" in body["error"]
+

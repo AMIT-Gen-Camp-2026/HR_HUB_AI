@@ -1,0 +1,842 @@
+[
+  {
+    "run_index": 1,
+    "status_code": 200,
+    "latency_sec": 39.467,
+    "score": 80.0,
+    "judge_provider": "openrouter",
+    "judge_model": "meta-llama/llama-3.3-70b-instruct",
+    "fallback_to_taxonomy": false,
+    "breakdown": {
+      "candidate_total_years": 8.44,
+      "experience_component": 0.1,
+      "experience_ratio": 1.0,
+      "fallback_to_taxonomy": false,
+      "hard_skill_score": 1.0,
+      "hard_skill_weight": 1.0,
+      "judge_prompt_version": "semantic-judge-v1",
+      "nice_to_have_component": 0.0,
+      "nice_to_have_satisfaction_average": 0.0,
+      "nice_to_have_skills_total": 4,
+      "preferred_bonus": 0.0,
+      "required_component": 0.7,
+      "required_satisfaction_average": 1.0,
+      "required_skills_total": 7,
+      "scoring_version": "weighted-70-20-10-v1",
+      "semantic_weight": 0.0,
+      "taxonomy_version": null
+    },
+    "skill_evaluations": [
+      {
+        "evidence_quote": "Explicit skill: Selenium WebDriver",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Selenium WebDriver for browser automation testing.",
+        "requirement": "Selenium WebDriver",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Postman",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Postman for API testing.",
+        "requirement": "Postman",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SQL",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill with SQL and project experience with SQL queries for backend data integrity checks.",
+        "requirement": "SQL (SELECT, JOINs, WHERE clauses)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: JIRA",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Jira issue tracking and project management.",
+        "requirement": "Jira",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Java",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill with Java and project experience with Selenium WebDriver using Java.",
+        "requirement": "Object-Oriented Programming (Java or Python)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SDLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill with SDLC and experience with software testing life cycle processes.",
+        "requirement": "Software Development Life Cycle (SDLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: STLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill with STLC and experience with software testing life cycle processes.",
+        "requirement": "Software Testing Life Cycle (STLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related certification or mention in evidence.",
+        "requirement": "ISTQB Certified Tester Foundation Level (CTFL)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "TestNG",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "JUnit",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "Cucumber (BDD)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      }
+    ]
+  },
+  {
+    "run_index": 2,
+    "status_code": 200,
+    "latency_sec": 4.973,
+    "score": 70.0,
+    "judge_provider": "groq",
+    "judge_model": "openai/gpt-oss-120b",
+    "fallback_to_taxonomy": false,
+    "breakdown": {
+      "candidate_total_years": 8.44,
+      "experience_component": 0.1,
+      "experience_ratio": 1.0,
+      "fallback_to_taxonomy": false,
+      "hard_skill_score": 0.8571,
+      "hard_skill_weight": 1.0,
+      "judge_prompt_version": "semantic-judge-v1",
+      "nice_to_have_component": 0.0,
+      "nice_to_have_satisfaction_average": 0.0,
+      "nice_to_have_skills_total": 4,
+      "preferred_bonus": 0.0,
+      "required_component": 0.6,
+      "required_satisfaction_average": 0.8571428571428571,
+      "required_skills_total": 7,
+      "scoring_version": "weighted-70-20-10-v1",
+      "semantic_weight": 0.0,
+      "taxonomy_version": null
+    },
+    "skill_evaluations": [
+      {
+        "evidence_quote": "Explicit skill: Selenium WebDriver",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry and project description show Selenium WebDriver usage.",
+        "requirement": "Selenium WebDriver",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Postman",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and multiple project descriptions reference Postman.",
+        "requirement": "Postman",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SQL",
+        "final_skill_score": 50.0,
+        "is_group_representative": false,
+        "reasoning": "SQL skill and project mention of executing SQL queries indicate familiarity, but no specific evidence of SELECT, JOIN, or WHERE usage.",
+        "requirement": "SQL (SELECT, JOINs, WHERE clauses)",
+        "satisfaction_percent": 50.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: JIRA",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry for Jira.",
+        "requirement": "Jira",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Java",
+        "final_skill_score": 50.0,
+        "is_group_representative": false,
+        "reasoning": "Java is listed as an explicit skill, implying OOP knowledge, but no explicit Python or OOP statement.",
+        "requirement": "Object-Oriented Programming (Java or Python)",
+        "satisfaction_percent": 50.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SDLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry for SDLC.",
+        "requirement": "Software Development Life Cycle (SDLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: STLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry for STLC.",
+        "requirement": "Software Testing Life Cycle (STLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "Certification not referenced anywhere in evidence.",
+        "requirement": "ISTQB Certified Tester Foundation Level (CTFL)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "TestNG is not referenced in any skill or project description.",
+        "requirement": "TestNG",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "JUnit is not mentioned in skills or projects.",
+        "requirement": "JUnit",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No mention of Cucumber or BDD in evidence.",
+        "requirement": "Cucumber (BDD)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      }
+    ]
+  },
+  {
+    "run_index": 3,
+    "status_code": 200,
+    "latency_sec": 79.008,
+    "score": 80.0,
+    "judge_provider": "openrouter",
+    "judge_model": "meta-llama/llama-3.3-70b-instruct",
+    "fallback_to_taxonomy": false,
+    "breakdown": {
+      "candidate_total_years": 8.44,
+      "experience_component": 0.1,
+      "experience_ratio": 1.0,
+      "fallback_to_taxonomy": false,
+      "hard_skill_score": 1.0,
+      "hard_skill_weight": 1.0,
+      "judge_prompt_version": "semantic-judge-v1",
+      "nice_to_have_component": 0.0,
+      "nice_to_have_satisfaction_average": 0.0,
+      "nice_to_have_skills_total": 4,
+      "preferred_bonus": 0.0,
+      "required_component": 0.7,
+      "required_satisfaction_average": 1.0,
+      "required_skills_total": 7,
+      "scoring_version": "weighted-70-20-10-v1",
+      "semantic_weight": 0.0,
+      "taxonomy_version": null
+    },
+    "skill_evaluations": [
+      {
+        "evidence_quote": "Explicit skill: Selenium WebDriver",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Selenium WebDriver for browser automation testing.",
+        "requirement": "Selenium WebDriver",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Postman",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Postman for API testing.",
+        "requirement": "Postman",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SQL",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill with SQL and project experience with SQL queries for backend data integrity checks.",
+        "requirement": "SQL (SELECT, JOINs, WHERE clauses)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: JIRA",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Jira for bug tracking and reporting.",
+        "requirement": "Jira",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Java",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill with Java and project experience with Selenium WebDriver automation framework in Java.",
+        "requirement": "Object-Oriented Programming (Java or Python)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SDLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill with SDLC and experience in software testing.",
+        "requirement": "Software Development Life Cycle (SDLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: STLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill with STLC and experience in software testing.",
+        "requirement": "Software Testing Life Cycle (STLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related certification or mention in evidence.",
+        "requirement": "ISTQB Certified Tester Foundation Level (CTFL)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "TestNG",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "JUnit",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "Cucumber (BDD)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      }
+    ]
+  },
+  {
+    "run_index": 4,
+    "status_code": 200,
+    "latency_sec": 5.56,
+    "score": 72.5,
+    "judge_provider": "groq",
+    "judge_model": "openai/gpt-oss-120b",
+    "fallback_to_taxonomy": false,
+    "breakdown": {
+      "candidate_total_years": 8.44,
+      "experience_component": 0.1,
+      "experience_ratio": 1.0,
+      "fallback_to_taxonomy": false,
+      "hard_skill_score": 0.8929,
+      "hard_skill_weight": 1.0,
+      "judge_prompt_version": "semantic-judge-v1",
+      "nice_to_have_component": 0.0,
+      "nice_to_have_satisfaction_average": 0.0,
+      "nice_to_have_skills_total": 4,
+      "preferred_bonus": 0.0,
+      "required_component": 0.625,
+      "required_satisfaction_average": 0.8928571428571429,
+      "required_skills_total": 7,
+      "scoring_version": "weighted-70-20-10-v1",
+      "semantic_weight": 0.0,
+      "taxonomy_version": null
+    },
+    "skill_evaluations": [
+      {
+        "evidence_quote": "Explicit skill: Selenium WebDriver",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and projects explicitly state Selenium WebDriver usage.",
+        "requirement": "Selenium WebDriver",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Postman",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and multiple project descriptions mention Postman usage.",
+        "requirement": "Postman",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SQL",
+        "final_skill_score": 50.0,
+        "is_group_representative": false,
+        "reasoning": "SQL skill is listed and projects mention executing SQL queries, but no specific evidence of SELECT, JOIN, WHERE usage.",
+        "requirement": "SQL (SELECT, JOINs, WHERE clauses)",
+        "satisfaction_percent": 50.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: JIRA",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill listed as JIRA and Jira, direct match.",
+        "requirement": "Jira",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Java",
+        "final_skill_score": 75.0,
+        "is_group_representative": false,
+        "reasoning": "Java skill is explicitly listed, indicating OOP proficiency; Python missing but core intent largely satisfied.",
+        "requirement": "Object-Oriented Programming (Java or Python)",
+        "satisfaction_percent": 75.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SDLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill SDLC is listed.",
+        "requirement": "Software Development Life Cycle (SDLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: STLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill STLC is listed.",
+        "requirement": "Software Testing Life Cycle (STLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No certification or related claim present; no relation.",
+        "requirement": "ISTQB Certified Tester Foundation Level (CTFL)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "TestNG is not mentioned in any skill or project; no relation.",
+        "requirement": "TestNG",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "JUnit not referenced anywhere in evidence; no relation.",
+        "requirement": "JUnit",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No mention of Cucumber or BDD in evidence; relation absent.",
+        "requirement": "Cucumber (BDD)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      }
+    ]
+  },
+  {
+    "run_index": 5,
+    "status_code": 200,
+    "latency_sec": 4.694,
+    "score": 75.0,
+    "judge_provider": "groq",
+    "judge_model": "openai/gpt-oss-120b",
+    "fallback_to_taxonomy": false,
+    "breakdown": {
+      "candidate_total_years": 8.44,
+      "experience_component": 0.1,
+      "experience_ratio": 1.0,
+      "fallback_to_taxonomy": false,
+      "hard_skill_score": 0.9286,
+      "hard_skill_weight": 1.0,
+      "judge_prompt_version": "semantic-judge-v1",
+      "nice_to_have_component": 0.0,
+      "nice_to_have_satisfaction_average": 0.0,
+      "nice_to_have_skills_total": 4,
+      "preferred_bonus": 0.0,
+      "required_component": 0.65,
+      "required_satisfaction_average": 0.9285714285714286,
+      "required_skills_total": 7,
+      "scoring_version": "weighted-70-20-10-v1",
+      "semantic_weight": 0.0,
+      "taxonomy_version": null
+    },
+    "skill_evaluations": [
+      {
+        "evidence_quote": "Explicit skill: Selenium WebDriver",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry and project description show Selenium WebDriver usage.",
+        "requirement": "Selenium WebDriver",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Postman",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry and multiple project descriptions reference Postman.",
+        "requirement": "Postman",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SQL",
+        "final_skill_score": 75.0,
+        "is_group_representative": false,
+        "reasoning": "SQL skill and project work with SQL queries demonstrate capability, though specific SELECT/JOIN/WHERE usage is not detailed.",
+        "requirement": "SQL (SELECT, JOINs, WHERE clauses)",
+        "satisfaction_percent": 75.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Jira",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry for Jira.",
+        "requirement": "Jira",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Java",
+        "final_skill_score": 75.0,
+        "is_group_representative": false,
+        "reasoning": "Java skill and Java‑based automation framework indicate strong Java/OOP experience, though Python and explicit OOP wording are absent.",
+        "requirement": "Object-Oriented Programming (Java or Python)",
+        "satisfaction_percent": 75.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SDLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry for SDLC.",
+        "requirement": "Software Development Life Cycle (SDLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: STLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill entry for STLC.",
+        "requirement": "Software Testing Life Cycle (STLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "Certification not referenced anywhere in evidence.",
+        "requirement": "ISTQB Certified Tester Foundation Level (CTFL)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "TestNG is not referenced in any skill or project description.",
+        "requirement": "TestNG",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "JUnit is not mentioned in skills or projects.",
+        "requirement": "JUnit",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No mention of Cucumber or BDD in evidence.",
+        "requirement": "Cucumber (BDD)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      }
+    ]
+  },
+  {
+    "run_index": 6,
+    "status_code": 200,
+    "latency_sec": 60.004,
+    "score": 80.0,
+    "judge_provider": "openrouter",
+    "judge_model": "meta-llama/llama-3.3-70b-instruct",
+    "fallback_to_taxonomy": false,
+    "breakdown": {
+      "candidate_total_years": 8.44,
+      "experience_component": 0.1,
+      "experience_ratio": 1.0,
+      "fallback_to_taxonomy": false,
+      "hard_skill_score": 1.0,
+      "hard_skill_weight": 1.0,
+      "judge_prompt_version": "semantic-judge-v1",
+      "nice_to_have_component": 0.0,
+      "nice_to_have_satisfaction_average": 0.0,
+      "nice_to_have_skills_total": 4,
+      "preferred_bonus": 0.0,
+      "required_component": 0.7,
+      "required_satisfaction_average": 1.0,
+      "required_skills_total": 7,
+      "scoring_version": "weighted-70-20-10-v1",
+      "semantic_weight": 0.0,
+      "taxonomy_version": null
+    },
+    "skill_evaluations": [
+      {
+        "evidence_quote": "Explicit skill: Selenium WebDriver",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Selenium WebDriver for browser automation testing.",
+        "requirement": "Selenium WebDriver",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Postman",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Postman for API testing.",
+        "requirement": "Postman",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SQL",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill in SQL and project experience with SQL queries for backend data integrity checks.",
+        "requirement": "SQL (SELECT, JOINs, WHERE clauses)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: JIRA",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill and project experience with Jira for bug tracking and reporting.",
+        "requirement": "Jira",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: Java",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill in Java and project experience with Java using Selenium WebDriver.",
+        "requirement": "Object-Oriented Programming (Java or Python)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: SDLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill in SDLC, indicating understanding of the software development life cycle processes.",
+        "requirement": "Software Development Life Cycle (SDLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "Explicit skill: STLC",
+        "final_skill_score": 100.0,
+        "is_group_representative": false,
+        "reasoning": "Explicit skill in STLC, indicating understanding of the software testing life cycle processes.",
+        "requirement": "Software Testing Life Cycle (STLC)",
+        "satisfaction_percent": 100.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related certification or mention in evidence.",
+        "requirement": "ISTQB Certified Tester Foundation Level (CTFL)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "TestNG",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "JUnit",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      },
+      {
+        "evidence_quote": "",
+        "final_skill_score": 0.0,
+        "is_group_representative": false,
+        "reasoning": "No related tool, project or mention in evidence.",
+        "requirement": "Cucumber (BDD)",
+        "satisfaction_percent": 0.0,
+        "skill_group_id": null,
+        "source_multiplier": 1.0
+      }
+    ]
+  }
+]

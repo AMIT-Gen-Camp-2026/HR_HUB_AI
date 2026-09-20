@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -29,6 +29,7 @@ class Experience(StrictModel):
     company: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    description: Optional[str] = None
 
 
 class Project(StrictModel):
@@ -54,8 +55,10 @@ EMPTY_CV_SCHEMA: dict = CVSchema().model_dump()
 class JobDescription(StrictModel):
     title: str
     required_skills: List[str]
+    required_skill_groups: list[list[str]] | None = None
     nice_to_have_skills: List[str] = Field(default_factory=list)
     min_experience_years: Optional[int] = None
+    matching_mode: Literal["taxonomy", "semantic"] = "taxonomy"
 
     @model_validator(mode="before")
     @classmethod
@@ -83,19 +86,68 @@ class JobDescription(StrictModel):
 
         return normalized
 
+    @model_validator(mode="after")
+    def validate_skill_groups(self) -> "JobDescription":
+        if self.required_skill_groups is not None:
+            for group in self.required_skill_groups:
+                if len(group) < 2:
+                    raise ValueError(
+                        f"Each group in required_skill_groups must contain at least 2 skills, got {len(group)}: {group}"
+                    )
+
+            req_skills_map = {s.strip().lower(): s for s in self.required_skills}
+            for group in self.required_skill_groups:
+                for skill in group:
+                    cleaned = skill.strip().lower()
+                    if cleaned in req_skills_map:
+                        conflicting_name = req_skills_map[cleaned]
+                        raise ValueError(
+                            f"Skill '{conflicting_name}' cannot be listed as both an independent requirement and part of an alternative group."
+                        )
+        return self
+
 
 class RankingRequest(StrictModel):
     candidate: CVSchema
     job_description: JobDescription
 
 
+class SkillEvaluation(StrictModel):
+    requirement: str
+    satisfaction_percent: float = Field(ge=0.0, le=100.0)
+    reasoning: str
+    evidence_quote: str
+    source_multiplier: float = Field(default=1.0, ge=0.0, le=1.0)
+    final_skill_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    skill_group_id: int | None = None
+    is_group_representative: bool = False
+
+
 class RankingResult(StrictModel):
     score: float
-    matched_skills: List[str]
-    missing_skills: List[str]
+    matched_skills: List[str] = Field(default_factory=list)
+    missing_skills: List[str] = Field(default_factory=list)
     matched_required_skills: List[str] = Field(default_factory=list)
     missing_required_skills: List[str] = Field(default_factory=list)
     matched_preferred_skills: List[str] = Field(default_factory=list)
     missing_preferred_skills: List[str] = Field(default_factory=list)
     semantic_fit: Optional[float] = None
+    judge_provider: Optional[str] = None
+    judge_model: Optional[str] = None
+    skill_evaluations: List[SkillEvaluation] = Field(default_factory=list)
     breakdown: dict
+
+
+class EnrichedRequirement(StrictModel):
+    raw_text: str
+    core_intent: str
+    implied_components: List[str] = Field(default_factory=list)
+    is_composite: bool = False
+    specificity: Literal["specific", "vague"] = "specific"
+
+
+class EnrichedJobDescription(StrictModel):
+    job_description: JobDescription
+    required_skills: List[EnrichedRequirement] = Field(default_factory=list)
+    required_skill_groups: list[list[EnrichedRequirement]] | None = None
+    nice_to_have_skills: List[EnrichedRequirement] = Field(default_factory=list)

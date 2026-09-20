@@ -11,6 +11,24 @@ def test_unknown_skill_returns_none() -> None:
     assert canonicalise("Underwater Basket Weaving") is None
 
 
+def test_symbolic_language_names_do_not_collide() -> None:
+    assert canonicalise("C#") == "skill.csharp"
+    assert canonicalise("C++") == "skill.cpp"
+    assert canonicalise(".NET") == "skill.dotnet"
+    assert canonicalise("ASP.NET") == "skill.dotnet"
+
+
+def test_formatting_variants_use_exact_taxonomy_matches() -> None:
+    assert canonicalise("React.js") == canonicalise("React JS") == "skill.react"
+    assert canonicalise("REST API") == canonicalise("REST-API") == "skill.rest_api"
+    assert canonicalise("end to end testing") == "skill.e2e_testing"
+
+
+def test_unrelated_near_matches_are_not_fuzzy_mapped() -> None:
+    assert canonicalise("Quantum Testing") is None
+    assert canonicalise("Database Testing") is None
+
+
 def test_ai_domain_aliases_are_explicit_and_conservative() -> None:
     assert canonicalise("ChatGPT") == canonicalise("Chat GPT")
     assert canonicalise("Gemini") == canonicalise("Google Gemini")

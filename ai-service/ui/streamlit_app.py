@@ -1,4 +1,5 @@
 import json
+import html
 import os
 
 import requests
@@ -12,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # يقرأ .env من نفس فولدر المشروع (لو موجود)
 
-BASE_URL = "http://127.0.0.1:5000"
+BASE_URL = os.getenv("AI_SERVICE_URL", "http://127.0.0.1:5000").rstrip("/")
 EVALUATE_URL = f"{BASE_URL}/api/v1/cv/evaluate"
 
 # نفس المتغير بالظبط اللي الـ Flask app (config/settings.py) بيقرأه، فمفيش
@@ -387,7 +388,7 @@ def safe_value(value, default="Not provided"):
 
 
 def display_list(items, css_class="skill"):
-    """Display list items as tags."""
+    """Display list items without interpreting their contents as HTML."""
 
     if not items:
         st.write("Not provided")
@@ -396,12 +397,7 @@ def display_list(items, css_class="skill"):
     if isinstance(items, str):
         items = [items]
 
-    html = ""
-
-    for item in items:
-        html += f'<span class="{css_class}">{item}</span>'
-
-    st.markdown(html, unsafe_allow_html=True)
+    st.write(" · ".join(str(item) for item in items))
 
 
 def display_value(value):
@@ -518,6 +514,15 @@ with evaluate_tab:
 
     jd_title = st.text_input("Job title", value="Data Analyst")
 
+    matching_mode_selection = st.radio(
+        "Matching Mode",
+        options=["Taxonomy (current default)", "Semantic (new, experimental)"],
+        index=0,
+        horizontal=True,
+        help="Taxonomy mode uses strict taxonomy-gated matching with source multipliers. Semantic mode uses direct LLM capability evaluation without taxonomy gating.",
+    )
+    matching_mode = "semantic" if "Semantic" in matching_mode_selection else "taxonomy"
+
     col1, col2 = st.columns(2)
     with col1:
         required_skills_text = st.text_area(
@@ -554,6 +559,7 @@ with evaluate_tab:
         else:
             job_description = {
                 "title": jd_title,
+                "matching_mode": matching_mode,
                 "required_skills": [s.strip() for s in required_skills_text.splitlines() if s.strip()],
                 "nice_to_have_skills": [s.strip() for s in nice_to_have_text.splitlines() if s.strip()],
             }
@@ -609,7 +615,7 @@ with evaluate_tab:
                 st.markdown(
                     '<div class="info-card">'
                     '<div class="info-label">Name</div>'
-                    f'<div class="info-value">{safe_value(personal.get("name"))}</div>'
+                    f'<div class="info-value">{html.escape(str(safe_value(personal.get("name"))))}</div>'
                     "</div>",
                     unsafe_allow_html=True,
                 )
@@ -617,7 +623,7 @@ with evaluate_tab:
                 st.markdown(
                     '<div class="info-card">'
                     '<div class="info-label">Email</div>'
-                    f'<div class="info-value">{safe_value(personal.get("email"))}</div>'
+                    f'<div class="info-value">{html.escape(str(safe_value(personal.get("email"))))}</div>'
                     "</div>",
                     unsafe_allow_html=True,
                 )
@@ -627,7 +633,7 @@ with evaluate_tab:
                 st.markdown(
                     '<div class="info-card">'
                     '<div class="info-label">Phone</div>'
-                    f'<div class="info-value">{safe_value(personal.get("phone"))}</div>'
+                    f'<div class="info-value">{html.escape(str(safe_value(personal.get("phone"))))}</div>'
                     "</div>",
                     unsafe_allow_html=True,
                 )
@@ -635,7 +641,7 @@ with evaluate_tab:
                 st.markdown(
                     '<div class="info-card">'
                     '<div class="info-label">Location</div>'
-                    f'<div class="info-value">{safe_value(personal.get("location"))}</div>'
+                    f'<div class="info-value">{html.escape(str(safe_value(personal.get("location"))))}</div>'
                     "</div>",
                     unsafe_allow_html=True,
                 )
@@ -659,9 +665,10 @@ with evaluate_tab:
                     if isinstance(job, dict):
                         st.markdown(
                             '<div class="experience-card">'
-                            f"<strong>{safe_value(job.get('job_title'))}</strong><br>"
-                            f"{safe_value(job.get('company'))}<br>"
-                            f"{safe_value(job.get('start_date'))} - {safe_value(job.get('end_date'))}"
+                            f"<strong>{html.escape(str(safe_value(job.get('job_title'))))}</strong><br>"
+                            f"{html.escape(str(safe_value(job.get('company'))))}<br>"
+                            f"{html.escape(str(safe_value(job.get('start_date'))))} - "
+                            f"{html.escape(str(safe_value(job.get('end_date'))))}"
                             "</div>",
                             unsafe_allow_html=True,
                         )
@@ -689,22 +696,67 @@ with evaluate_tab:
         else:
             score = ranking_result.get("score", 0)
             st.markdown(score_ring_html(score), unsafe_allow_html=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown('<div class="section-title">Matched Skills</div>', unsafe_allow_html=True)
-                st.markdown('<div class="info-card">', unsafe_allow_html=True)
-                display_list(ranking_result.get("matched_skills"), css_class="skill-matched")
-                st.markdown("</div>", unsafe_allow_html=True)
-            with col2:
-                st.markdown('<div class="section-title">Missing Skills</div>', unsafe_allow_html=True)
-                st.markdown('<div class="info-card">', unsafe_allow_html=True)
-                display_list(ranking_result.get("missing_skills"), css_class="skill-missing")
-                st.markdown("</div>", unsafe_allow_html=True)
-            semantic_fit = ranking_result.get("semantic_fit")
-            if semantic_fit is not None:
-                st.caption(f"Semantic fit (embedding similarity): {semantic_fit:.2f}")
+
+            breakdown = ranking_result.get("breakdown") or {}
+            judge_prompt_version = breakdown.get("judge_prompt_version")
+            fallback_to_taxonomy = breakdown.get("fallback_to_taxonomy", False)
+            judge_provider = ranking_result.get("judge_provider")
+            judge_model = ranking_result.get("judge_model")
+
+            # Judge Provider and Model Info
+            if judge_provider or judge_model:
+                st.info(
+                    f"**Judge:** {safe_value(judge_provider, 'unknown provider')} · "
+                    f"`{safe_value(judge_model, 'unknown model')}`"
+                )
+
+            # Matching Mode & Fallback Badge
+            if fallback_to_taxonomy:
+                st.warning(
+                    f"⚠️ **Semantic Matching Fallback:** Semantic evaluation encountered an issue and fell back to Taxonomy mode "
+                    f"(`judge_prompt_version: {judge_prompt_version or 'ranking-judge-v1'}`)."
+                )
+            elif judge_prompt_version == "semantic-judge-v1":
+                st.success(
+                    f"✨ **Matching Mode:** Semantic (`judge_prompt_version: {judge_prompt_version}`)"
+                )
+            else:
+                st.caption(
+                    f"🏷️ **Matching Mode:** Taxonomy (`judge_prompt_version: {judge_prompt_version or 'ranking-judge-v1'}`)"
+                )
+
+            extraction_metadata = payload.get("extraction_metadata") or {}
+            cache_hit = extraction_metadata.get("cache_hit")
+            if cache_hit is not None:
+                st.caption(f"Extraction cache: {'hit' if cache_hit else 'miss'}")
+
+            st.markdown('<div class="section-title">Capability evaluations</div>', unsafe_allow_html=True)
+            evaluations = ranking_result.get("skill_evaluations") or []
+            is_semantic = (judge_prompt_version == "semantic-judge-v1") and not fallback_to_taxonomy
+            if evaluations:
+                for evaluation in evaluations:
+                    requirement = safe_value(evaluation.get("requirement"))
+                    satisfaction = evaluation.get("satisfaction_percent", 0)
+                    multiplier = evaluation.get("source_multiplier")
+                    final_score = evaluation.get("final_skill_score")
+
+                    if not is_semantic and multiplier is not None and multiplier < 1.0 and final_score is not None:
+                        st.write(f"**{satisfaction:.0f}%** (raw) × {multiplier} (multiplier) = **{final_score:.0f}%** — {requirement}")
+                    else:
+                        st.write(f"**{satisfaction:.0f}%** — {requirement}")
+
+                    st.caption(safe_value(evaluation.get("reasoning")))
+                    evidence_quote = evaluation.get("evidence_quote")
+                    if evidence_quote:
+                        st.code(evidence_quote, language=None)
+            else:
+                if is_semantic:
+                    st.info("No capability evaluations returned.")
+                else:
+                    st.info("No requirement received a taxonomy-gated capability evaluation.")
+
             with st.expander("Score breakdown"):
-                st.json(ranking_result.get("breakdown", {}))
+                st.json(breakdown)
 
             st.download_button(
                 label="Download ranking JSON",

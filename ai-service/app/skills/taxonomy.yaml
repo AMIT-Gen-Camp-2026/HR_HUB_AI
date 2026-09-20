@@ -1,421 +1,2437 @@
-# ────────────────────────────────────────────────────────────
-# Skill taxonomy. Every skill the system recognises, with its
-# aliases. Without this, "Scikit-learn", "scikit learn" and
-# "sklearn" are three different skills and ranking breaks.
-#
-# Grow this from the requirement checklists of the ten job
-# profiles — those are the skills that actually matter.
-#
-# ملحوظة (Sprint 2 - CV/JD Ranking): الإضافات اللي تحت خط
-# "--- Sprint 2 additions ---" اتحطت بناءً على تخمين من نفس
-# الفئات الأربعة الموجودة أصلًا (Data/BI, Frontend/Mobile, QA,
-# Security) - مفيش checklists فعلية لعشر الوظائف موجودة في
-# المشروع وقت كتابة السطور دي. لازم تتراجع/تتعدّل لما الـ
-# checklists الحقيقية تتوفر.
-# ────────────────────────────────────────────────────────────
-
 skills:
-  - id: skill.python
-    name: Python
-    aliases: [python3, "python 3", py]
-    category: language
+- id: skill.python
+  name: Python
+  aliases:
+  - python3
+  - python 3
+  - py
+  category: language
+- id: skill.sql
+  name: SQL
+  aliases:
+  - t-sql
+  - tsql
+  - structured query language
+  category: language
+- id: skill.pandas
+  name: Pandas
+  aliases:
+  - pandas
+  category: library
+- id: skill.sklearn
+  name: Scikit-learn
+  aliases:
+  - sklearn
+  - scikit learn
+  - scikitlearn
+  category: library
+- id: skill.xgboost
+  name: XGBoost
+  aliases:
+  - xgb
+  - x-gboost
+  category: library
+- id: skill.powerbi
+  name: Power BI
+  aliases:
+  - powerbi
+  - power-bi
+  - pbi
+  category: tool
+- id: skill.dax
+  name: DAX
+  aliases:
+  - data analysis expressions
+  category: language
+- id: skill.excel
+  name: Excel
+  aliases:
+  - microsoft excel
+  - ms excel
+  category: tool
+- id: skill.tableau
+  name: Tableau
+  aliases: []
+  category: tool
+- id: skill.azure_ml
+  name: Azure ML
+  aliases:
+  - azure machine learning
+  - azureml
+  category: platform
+- id: skill.react
+  name: React
+  aliases:
+  - react js
+  - react.js
+  - reactjs
+  category: framework
+  includes:
+  - skill.jsx
+  - skill.nextjs
+  - skill.react_hooks
+  - skill.react_router
+  - skill.redux
+- id: skill.flutter
+  name: Flutter
+  aliases:
+  - dart flutter
+  - flutter framework
+  - flutter sdk
+  category: framework
+- id: skill.selenium
+  name: Selenium
+  aliases:
+  - selenium grid
+  - selenium ide
+  - selenium webdriver
+  - selenium-webdriver
+  - webdriver
+  category: tool
+- id: skill.siem
+  name: SIEM
+  aliases:
+  - splunk
+  - qradar
+  - security information and event management
+  category: domain
+- id: skill.numpy
+  name: NumPy
+  aliases:
+  - numpy
+  category: library
+- id: skill.matplotlib
+  name: Matplotlib
+  aliases:
+  - matplotlib
+  - matplotlib.pyplot
+  category: library
+- id: skill.mysql
+  name: MySQL
+  aliases:
+  - my sql
+  category: tool
+- id: skill.postgresql
+  name: PostgreSQL
+  aliases:
+  - postgres
+  - postgre sql
+  category: tool
+- id: skill.tensorflow
+  name: TensorFlow
+  aliases:
+  - tf
+  category: library
+- id: skill.pytorch
+  name: PyTorch
+  aliases:
+  - torch
+  category: library
+- id: skill.javascript
+  name: JavaScript
+  aliases:
+  - ecmascript
+  - es6
+  - java script
+  - js
+  - modern javascript
+  - vanilla js
+  category: language
+- id: skill.typescript
+  name: TypeScript
+  aliases:
+  - ts
+  category: language
+- id: skill.html_css
+  name: HTML/CSS
+  aliases:
+  - html
+  - css
+  - html5
+  - css3
+  category: language
+- id: skill.nodejs
+  name: Node.js
+  aliases:
+  - node
+  - node js
+  - node.js runtime
+  - nodejs
+  category: platform
+  includes:
+  - skill.event_loop
+  - skill.express
+  - skill.nest_js
+- id: skill.vuejs
+  name: Vue.js
+  aliases:
+  - vue
+  - vue 2
+  - vue 3
+  - vue js
+  - vuejs
+  category: framework
+  includes:
+  - skill.nuxt
+  - skill.pinia
+  - skill.vue_router
+  - skill.vuex
+- id: skill.angular
+  name: Angular
+  aliases:
+  - angular 17
+  - angular 2+
+  - angular framework
+  - angular.js
+  - angularjs
+  category: framework
+  includes:
+  - skill.ngrx
+  - skill.rxjs
+  - skill.typescript
+- id: skill.kotlin
+  name: Kotlin
+  aliases:
+  - kotlin coroutines
+  - kotlin language
+  category: language
+- id: skill.swift
+  name: Swift
+  aliases:
+  - swift 5
+  - swift language
+  category: language
+- id: skill.appium
+  name: Appium
+  aliases:
+  - appium automation
+  - appium mobile testing
+  category: tool
+- id: skill.postman
+  name: Postman
+  aliases:
+  - newman runner
+  - postman collections
+  category: tool
+- id: skill.jira
+  name: Jira
+  aliases: []
+  category: tool
+- id: skill.penetration_testing
+  name: Penetration Testing
+  aliases:
+  - ethical hacking
+  - pen testing
+  - pen-testing
+  - pentest
+  category: domain
+  includes:
+  - skill.burp_suite
+  - skill.metasploit
+  - skill.nmap
+  - skill.owasp
+- id: skill.nmap
+  name: Nmap
+  aliases:
+  - network port scanning
+  - nmap scanner
+  category: tool
+- id: skill.wireshark
+  name: Wireshark
+  aliases: []
+  category: tool
+- id: skill.git
+  name: Git
+  aliases:
+  - github
+  - gitlab
+  category: tool
+- id: skill.docker
+  name: Docker
+  aliases:
+  - containerization
+  - docker containers
+  - docker-compose
+  - dockerfile
+  category: tool
+- id: skill.aws
+  name: AWS
+  aliases:
+  - amazon aws
+  - amazon web services
+  category: platform
+  includes:
+  - skill.aws_cloudformation
+  - skill.aws_ec2
+  - skill.aws_iam
+  - skill.aws_lambda
+  - skill.aws_rds
+  - skill.aws_s3
+- id: skill.azure
+  name: Azure
+  aliases:
+  - azure
+  - azure cloud
+  - microsoft azure
+  category: platform
+  includes:
+  - skill.azure_app_services
+  - skill.azure_blob_storage
+  - skill.azure_functions
+  - skill.azure_vms
+- id: skill.gcp
+  name: GCP
+  aliases:
+  - gcp
+  - google cloud
+  - google cloud platform
+  category: platform
+  includes:
+  - skill.bigquery
+  - skill.google_cloud_functions
+  - skill.google_cloud_storage
+  - skill.google_compute_engine
+- id: skill.chatgpt
+  name: ChatGPT
+  aliases:
+  - chatgpt
+  - chat gpt
+  category: ai_assistant
+- id: skill.claude
+  name: Claude
+  aliases: []
+  category: ai_assistant
+- id: skill.gemini
+  name: Gemini
+  aliases:
+  - google gemini
+  category: ai_assistant
+- id: skill.microsoft_copilot
+  name: Microsoft Copilot
+  aliases:
+  - copilot
+  category: ai_assistant
+- id: skill.perplexity
+  name: Perplexity
+  aliases: []
+  category: ai_assistant
+- id: skill.google_ai_studio
+  name: Google AI Studio
+  aliases:
+  - ai studio
+  category: ai_assistant
+- id: skill.notebooklm
+  name: NotebookLM
+  aliases:
+  - notebook lm
+  category: ai_assistant
+- id: skill.prompt_engineering
+  name: Prompt Engineering
+  aliases: []
+  category: ai_practice
+- id: skill.ai_image_generation
+  name: AI Image Generation
+  aliases: []
+  category: generative_ai
+- id: skill.midjourney
+  name: Midjourney
+  aliases: []
+  category: generative_ai
+- id: skill.chatgpt_image_generation
+  name: ChatGPT Image Generation
+  aliases:
+  - chatgpt image gen
+  category: generative_ai
+- id: skill.adobe_firefly
+  name: Adobe Firefly
+  aliases:
+  - firefly
+  category: generative_ai
+- id: skill.leonardo_ai
+  name: Leonardo AI
+  aliases:
+  - leonardo
+  category: generative_ai
+- id: skill.flux
+  name: Flux
+  aliases: []
+  category: generative_ai
+- id: skill.ideogram
+  name: Ideogram
+  aliases: []
+  category: generative_ai
+- id: skill.recraft
+  name: Recraft
+  aliases: []
+  category: generative_ai
+- id: skill.ai_video_generation
+  name: AI Video Generation
+  aliases: []
+  category: generative_ai
+- id: skill.runway
+  name: Runway
+  aliases:
+  - runway ml
+  category: generative_ai
+- id: skill.kling
+  name: Kling
+  aliases: []
+  category: generative_ai
+- id: skill.pika
+  name: Pika
+  aliases: []
+  category: generative_ai
+- id: skill.luma
+  name: Luma
+  aliases: []
+  category: generative_ai
+- id: skill.heygen
+  name: HeyGen
+  aliases:
+  - hey gen
+  category: generative_ai
+- id: skill.synthesia
+  name: Synthesia
+  aliases: []
+  category: generative_ai
+- id: skill.elevenlabs
+  name: ElevenLabs
+  aliases:
+  - eleven labs
+  category: generative_ai
+- id: skill.playht
+  name: PlayHT
+  aliases:
+  - play ht
+  category: generative_ai
+- id: skill.adobe_podcast
+  name: Adobe Podcast
+  aliases: []
+  category: generative_ai
+- id: skill.suno
+  name: Suno
+  aliases: []
+  category: generative_ai
+- id: skill.udio
+  name: Udio
+  aliases: []
+  category: generative_ai
+- id: skill.canva_ai
+  name: Canva AI
+  aliases:
+  - canva ai
+  category: ai_design
+- id: skill.gamma
+  name: Gamma
+  aliases: []
+  category: ai_design
+- id: skill.tome
+  name: Tome
+  aliases: []
+  category: ai_design
+- id: skill.adobe_express
+  name: Adobe Express
+  aliases: []
+  category: design
+- id: skill.figma_ai
+  name: Figma AI
+  aliases: []
+  category: ai_design
+- id: skill.ai_copywriting
+  name: AI Copywriting
+  aliases: []
+  category: ai_marketing
+- id: skill.social_media_content_creation
+  name: Social Media Content Creation
+  aliases: []
+  category: ai_marketing
+- id: skill.email_marketing
+  name: Email Marketing
+  aliases: []
+  category: marketing
+- id: skill.seo_with_ai
+  name: SEO with AI
+  aliases:
+  - ai seo
+  category: ai_marketing
+- id: skill.content_strategy
+  name: Content Strategy
+  aliases: []
+  category: marketing
+- id: skill.ai_marketing_campaigns
+  name: AI Marketing Campaigns
+  aliases:
+  - ai powered marketing campaigns
+  category: ai_marketing
+- id: skill.branding_with_ai
+  name: Branding with AI
+  aliases:
+  - ai branding
+  category: ai_marketing
+- id: skill.java
+  name: Java
+  aliases:
+  - java8
+  - java 8
+  - java11
+  - java 11
+  - java17
+  - java 17
+  - java21
+  - java 21
+  - core java
+  - jvm
+  category: language
+- id: skill.csharp
+  name: C# (C-Sharp)
+  aliases:
+  - csharp
+  - c sharp
+  - c-sharp
+  category: language
+- id: skill.dotnet
+  name: .NET
+  aliases:
+  - dotnet
+  - .net core
+  - dotnet core
+  - .net framework
+  - asp.net
+  - asp.net core
+  - aspnet
+  - aspnetcore
+  category: framework
+- id: skill.php
+  name: PHP
+  aliases:
+  - php7
+  - php8
+  category: language
+- id: skill.laravel
+  name: Laravel
+  aliases: []
+  category: framework
+- id: skill.django
+  name: Django
+  aliases:
+  - django framework
+  - django python
+  - drf
+  category: framework
+  includes:
+  - skill.django_rest_framework
+  - skill.django_templates
+  - skill.orm
+- id: skill.flask
+  name: Flask
+  aliases:
+  - flask framework
+  category: framework
+- id: skill.spring
+  name: Spring
+  aliases:
+  - spring framework
+  category: framework
+- id: skill.ruby
+  name: Ruby
+  aliases: []
+  category: language
+- id: skill.rails
+  name: Ruby on Rails
+  aliases:
+  - rails
+  - ruby-on-rails
+  - ror
+  category: framework
+- id: skill.go
+  name: Go
+  aliases:
+  - golang
+  - go language
+  category: language
+- id: skill.rust
+  name: Rust
+  aliases:
+  - rustlang
+  - rust lang
+  category: language
+- id: skill.cpp
+  name: C++ (Cpp)
+  aliases:
+  - cpp
+  - cplusplus
+  - c plus plus
+  category: language
+- id: skill.c
+  name: C Language
+  aliases:
+  - c programming
+  - ansi c
+  - c-language
+  category: language
+- id: skill.mongodb
+  name: MongoDB
+  aliases:
+  - mongo
+  - mongo db
+  - mongoose
+  - nosql mongodb
+  category: tool
+- id: skill.redis
+  name: Redis
+  aliases:
+  - redis cache
+  - redis pub/sub
+  category: tool
+- id: skill.oracle_db
+  name: Oracle Database
+  aliases:
+  - oracle db
+  - oracle sql
+  - pl/sql
+  - plsql
+  - pl-sql
+  category: tool
+- id: skill.mssql
+  name: Microsoft SQL Server
+  aliases:
+  - sql server
+  - ms sql server
+  - mssql
+  - ms sql
+  category: tool
+- id: skill.sqlite
+  name: SQLite
+  aliases:
+  - sqlite3
+  - sqlite 3
+  category: tool
+- id: skill.cassandra
+  name: Cassandra
+  aliases:
+  - apache cassandra
+  - cassandra
+  - datastax
+  category: tool
+- id: skill.dynamodb
+  name: DynamoDB
+  aliases:
+  - amazon dynamodb
+  - aws dynamodb
+  - dynamo db
+  - dynamodb
+  category: tool
+- id: skill.mariadb
+  name: MariaDB
+  aliases: []
+  category: tool
+- id: skill.firebase
+  name: Firebase
+  aliases:
+  - firestore
+  - google firebase
+  - cloud firestore
+  category: platform
+- id: skill.kubernetes
+  name: Kubernetes
+  aliases:
+  - container orchestration
+  - helm
+  - k8s
+  - kube
+  category: tool
+- id: skill.terraform
+  name: Terraform
+  aliases:
+  - hashicorp terraform
+  - hcl
+  - iac terraform
+  category: tool
+- id: skill.ansible
+  name: Ansible
+  aliases:
+  - ansible playbooks
+  - red hat ansible
+  category: tool
+- id: skill.jenkins
+  name: Jenkins
+  aliases:
+  - jenkins pipelines
+  - jenkinsfile
+  category: tool
+- id: skill.github_actions
+  name: GitHub Actions
+  aliases:
+  - gh actions
+  - github workflows
+  category: tool
+- id: skill.gitlab_ci
+  name: GitLab CI
+  aliases:
+  - gitlab ci/cd
+  - gitlab cicd
+  - gitlab-ci
+  category: tool
+- id: skill.circleci
+  name: CircleCI
+  aliases:
+  - circle ci
+  category: tool
+- id: skill.cicd
+  name: CI/CD
+  aliases:
+  - ci cd
+  - ci-cd
+  - ci/cd
+  - ci/cd pipelines
+  - cicd
+  - continuous delivery
+  - continuous deployment
+  - continuous integration
+  category: domain
+  includes:
+  - skill.circleci
+  - skill.github_actions
+  - skill.gitlab_ci
+  - skill.jenkins
+- id: skill.nginx
+  name: Nginx
+  aliases: []
+  category: tool
+- id: skill.linux
+  name: Linux
+  aliases:
+  - linux administration
+  - linux admin
+  - unix
+  - ubuntu
+  - centos
+  - redhat
+  - rhel
+  - debian
+  - bash scripting
+  - shell scripting
+  category: platform
+- id: skill.sdlc
+  name: SDLC
+  aliases:
+  - software development life cycle
+  - software development lifecycle
+  - sdlc
+  category: domain
+- id: skill.stlc
+  name: STLC
+  aliases:
+  - software testing life cycle
+  - software testing lifecycle
+  - stlc
+  category: domain
+- id: skill.istqb
+  name: ISTQB
+  aliases:
+  - ctfl
+  - istqb certified tester foundation level
+  - istqb ctfl
+  - certified tester foundation level
+  - istqb foundation
+  - istqb certified
+  - istqb® certified ctfl v4 certified
+  - istqb certified tester foundation level (ctfl)
+  - certified tester foundation level (ctfl)
+  - software testing certification
+  - qa certification
+  category: domain
+- id: skill.testng
+  name: TestNG
+  aliases:
+  - test-ng
+  category: tool
+- id: skill.junit
+  name: JUnit
+  aliases:
+  - junit 4
+  - junit 5
+  - junit4
+  - junit5
+  category: tool
+- id: skill.cucumber
+  name: Cucumber
+  aliases:
+  - bdd
+  - behavior driven development
+  - behaviour driven development
+  - cucumber bdd
+  category: tool
+- id: skill.cypress
+  name: Cypress
+  aliases:
+  - cypress testing
+  - cypress.io
+  category: tool
+- id: skill.playwright
+  name: Playwright
+  aliases:
+  - microsoft playwright
+  - playwright testing
+  category: tool
+- id: skill.jmeter
+  name: JMeter
+  aliases:
+  - apache jmeter
+  category: tool
+- id: skill.katalon
+  name: Katalon Studio
+  aliases:
+  - katalon
+  category: tool
+- id: skill.rest_assured
+  name: REST Assured
+  aliases:
+  - rest assured
+  - rest-assured
+  - restassured
+  category: tool
+- id: skill.robot_framework
+  name: Robot Framework
+  aliases:
+  - robotframework
+  category: tool
+- id: skill.manual_testing
+  name: Manual Testing
+  aliases:
+  - exploratory testing
+  - manual qa
+  - manual test
+  category: domain
+- id: skill.api_testing
+  name: API Testing
+  aliases:
+  - api test
+  - rest api testing
+  - web service testing
+  category: domain
+  includes:
+  - skill.postman
+  - skill.rest_assured
+- id: skill.regression_testing
+  name: Regression Testing
+  aliases:
+  - regression test
+  category: domain
+- id: skill.performance_testing
+  name: Performance Testing
+  aliases:
+  - performance test
+  category: domain
+  includes:
+  - skill.gatling
+  - skill.jmeter
+  - skill.k6
+- id: skill.load_testing
+  name: Load Testing
+  aliases:
+  - load test
+  - stress test
+  - stress testing
+  category: domain
+- id: skill.uat
+  name: UAT
+  aliases:
+  - user acceptance testing
+  - user acceptance test
+  - uat
+  category: domain
+- id: skill.bug_tracking
+  name: Bug Tracking
+  aliases:
+  - defect tracking
+  - issue tracking
+  - bug reporting
+  - defect management
+  category: domain
+- id: skill.react_native
+  name: React Native
+  aliases:
+  - expo
+  - react-native
+  - reactnative
+  category: framework
+- id: skill.xamarin
+  name: Xamarin
+  aliases:
+  - xamarin.forms
+  - xamarin forms
+  category: framework
+- id: skill.android
+  name: Android
+  aliases:
+  - android development
+  - android app development
+  - android apps
+  category: platform
+  includes:
+  - skill.android_sdk
+  - skill.gradle
+  - skill.jetpack_compose
+  - skill.kotlin
+- id: skill.ios
+  name: iOS SDK
+  aliases:
+  - apple ios
+  - ios
+  - ios app development
+  - ios development
+  - ios sdk
+  - xcode
+  category: platform
+  includes:
+  - skill.cocoapods
+  - skill.swift
+  - skill.swiftui
+  - skill.uikit
+- id: skill.swiftui
+  name: SwiftUI
+  aliases:
+  - swift ui
+  category: framework
+- id: skill.jetpack_compose
+  name: Jetpack Compose
+  aliases:
+  - android compose
+  - compose
+  - compose ui
+  - jetpack compose
+  - jetpack-compose
+  category: framework
+- id: skill.keras
+  name: Keras
+  aliases: []
+  category: library
+- id: skill.transformers
+  name: Transformers
+  aliases:
+  - attention mechanism
+  - bert
+  - gpt
+  - hf transformers
+  - hugging face
+  - hugging face transformers
+  - huggingface
+  - self-attention
+  - transformer models
+  category: library
+- id: skill.langchain
+  name: LangChain
+  aliases:
+  - lang chain
+  category: library
+- id: skill.opencv
+  name: OpenCV
+  aliases:
+  - cv2
+  - open cv
+  category: library
+- id: skill.spark
+  name: Apache Spark
+  aliases:
+  - spark
+  - pyspark
+  - py-spark
+  - apache spark
+  category: tool
+- id: skill.hadoop
+  name: Hadoop
+  aliases:
+  - apache hadoop
+  - hdfs
+  - mapreduce
+  category: tool
+- id: skill.airflow
+  name: Apache Airflow
+  aliases:
+  - airflow
+  - apache airflow
+  category: tool
+- id: skill.etl
+  name: ETL
+  aliases:
+  - extract transform load
+  - etl pipeline
+  - etl pipelines
+  - data extraction
+  category: domain
+- id: skill.snowflake
+  name: Snowflake
+  aliases:
+  - snowflake db
+  - snowflake data warehouse
+  category: tool
+- id: skill.bigquery
+  name: Google BigQuery
+  aliases:
+  - big query
+  - bigquery
+  - gcp bigquery
+  category: tool
+- id: skill.redshift
+  name: Amazon Redshift
+  aliases:
+  - redshift
+  - aws redshift
+  category: tool
+- id: skill.nlp
+  name: NLP
+  aliases:
+  - computational linguistics
+  - natural language processing
+  - nlp
+  - text processing
+  category: domain
+  includes:
+  - skill.named_entity_recognition
+  - skill.sentiment_analysis
+  - skill.text_classification
+  - skill.tokenization
+  - skill.topic_modeling
+  - skill.word_embeddings
+- id: skill.oop
+  name: OOP
+  aliases:
+  - encapsulation
+  - inheritance
+  - object oriented
+  - object oriented programming
+  - object-oriented programming
+  - oop
+  - polymorphism
+  category: domain
+- id: skill.design_patterns
+  name: Design Patterns
+  aliases:
+  - factory pattern
+  - gang of four
+  - gof
+  - gof design patterns
+  - observer pattern
+  - singleton
+  - software design patterns
+  - strategy pattern
+  category: domain
+- id: skill.solid
+  name: SOLID Principles
+  aliases:
+  - solid
+  - solid design principles
+  category: domain
+- id: skill.agile
+  name: Agile
+  aliases:
+  - agile methodology
+  - agile methodologies
+  - agile development
+  category: domain
+- id: skill.scrum
+  name: Scrum
+  aliases:
+  - scrum master
+  - scrum methodology
+  - sprint planning
+  category: domain
+- id: skill.kanban
+  name: Kanban
+  aliases: []
+  category: domain
+- id: skill.microservices
+  name: Microservices
+  aliases:
+  - micro-services
+  - microservice
+  - microservice architecture
+  - microservices architecture
+  - service-oriented architecture
+  - soa
+  category: domain
+- id: skill.rest_api
+  name: REST API
+  aliases:
+  - rest
+  - restful
+  - restful api
+  - rest apis
+  - restful apis
+  - web apis
+  - web services
+  category: domain
+- id: skill.graphql
+  name: GraphQL
+  aliases:
+  - apollo graphql
+  - graph ql
+  - graphql api
+  category: language
+- id: skill.kafka
+  name: Apache Kafka
+  aliases:
+  - kafka
+  - apache kafka
+  category: tool
+- id: skill.rabbitmq
+  name: RabbitMQ
+  aliases:
+  - rabbitmq
+  category: tool
+- id: skill.unit_testing
+  name: Unit Testing
+  aliases:
+  - tdd
+  - test driven development
+  - unit test
+  - unit tests
+  category: domain
+- id: skill.system_design
+  name: System Design
+  aliases:
+  - distributed systems design
+  - high level design
+  - hld
+  - lld
+  - low level design
+  - scalability design
+  - software architecture
+  category: domain
+- id: skill.confluence
+  name: Confluence
+  aliases: []
+  category: tool
+- id: skill.trello
+  name: Trello
+  aliases: []
+  category: tool
+- id: skill.asana
+  name: Asana
+  aliases: []
+  category: tool
+- id: skill.slack
+  name: Slack
+  aliases: []
+  category: tool
+- id: skill.notion
+  name: Notion
+  aliases: []
+  category: tool
+- id: skill.svn
+  name: SVN
+  aliases:
+  - subversion
+  - apache subversion
+  category: tool
+- id: skill.bitbucket
+  name: Bitbucket
+  aliases: []
+  category: tool
+- id: skill.owasp
+  name: OWASP
+  aliases:
+  - csrf
+  - owasp
+  - owasp top 10
+  - owasp top ten
+  - sql injection
+  - web application vulnerabilities
+  - xss
+  category: domain
+- id: skill.burp_suite
+  name: Burp Suite
+  aliases:
+  - burp
+  - burpsuite
+  - burpsuite pro
+  category: tool
+- id: skill.metasploit
+  name: Metasploit
+  aliases:
+  - metasploit framework
+  - msfconsole
+  category: tool
+- id: skill.firewall
+  name: Firewall Management
+  aliases:
+  - firewall
+  - firewalls
+  category: domain
+- id: skill.vpn
+  name: VPN
+  aliases:
+  - virtual private network
+  - vpn
+  category: domain
+- id: skill.cryptography
+  name: Cryptography
+  aliases:
+  - aes
+  - cryptographic algorithms
+  - cryptography
+  - encryption
+  - hashing
+  - pki
+  - public key infrastructure
+  - rsa
+  - ssl/tls
+  - tls
+  category: domain
+- id: skill.machine_learning
+  name: Machine Learning
+  category: Artificial Intelligence
+  aliases:
+  - machine-learning
+  - ml
+  - statistical learning
+  includes:
+  - skill.clustering_algorithms
+  - skill.decision_trees
+  - skill.dimensionality_reduction
+  - skill.gradient_boosting
+  - skill.knn
+  - skill.linear_regression
+  - skill.logistic_regression
+  - skill.random_forests
+  - skill.sklearn
+  - skill.svm
+  - skill.xgboost
+- id: skill.linear_regression
+  name: Linear Regression
+  category: Artificial Intelligence
+  aliases:
+  - linear-regression
+  - ols regression
+  - ordinary least squares
+  - regression analysis
+- id: skill.logistic_regression
+  name: Logistic Regression
+  category: Artificial Intelligence
+  aliases:
+  - logistic classifier
+  - logistic-regression
+  - logit regression
+- id: skill.decision_trees
+  name: Decision Trees
+  category: Artificial Intelligence
+  aliases:
+  - cart algorithm
+  - decision tree
+  - decision tree classifier
+- id: skill.random_forests
+  name: Random Forests
+  category: Artificial Intelligence
+  aliases:
+  - random forest
+  - random forest classifier
+  - random forest regressor
+- id: skill.gradient_boosting
+  name: Gradient Boosting
+  category: Artificial Intelligence
+  aliases:
+  - gbm
+  - gradient boosted trees
+  - gradient boosting machines
+- id: skill.clustering_algorithms
+  name: Clustering Algorithms
+  category: Artificial Intelligence
+  aliases:
+  - cluster analysis
+  - clustering
+  - dbscan
+  - hierarchical clustering
+  - k-means
+  - kmeans
+- id: skill.dimensionality_reduction
+  name: Dimensionality Reduction
+  category: Artificial Intelligence
+  aliases:
+  - feature extraction
+  - pca
+  - principal component analysis
+  - t-sne
+  - tsne
+  - umap
+- id: skill.svm
+  name: Support Vector Machines
+  category: Artificial Intelligence
+  aliases:
+  - support vector classifier
+  - support vector machine
+  - svc
+  - svm
+- id: skill.knn
+  name: K-Nearest Neighbors
+  category: Artificial Intelligence
+  aliases:
+  - k nearest neighbors
+  - k-nearest neighbors
+  - k-nn
+  - knn
+- id: skill.deep_learning
+  name: Deep Learning
+  category: Artificial Intelligence
+  aliases:
+  - deep neural network
+  - deep neural networks
+  - dl
+  includes:
+  - skill.cnn
+  - skill.gan
+  - skill.keras
+  - skill.neural_networks
+  - skill.pytorch
+  - skill.rnn
+  - skill.tensorflow
+  - skill.transfer_learning
+  - skill.transformers
+- id: skill.neural_networks
+  name: Neural Networks
+  category: Artificial Intelligence
+  aliases:
+  - ann
+  - artificial neural networks
+  - mlp
+  - multilayer perceptron
+  - neural network
+- id: skill.cnn
+  name: Convolutional Neural Networks
+  category: Artificial Intelligence
+  aliases:
+  - cnn
+  - convnet
+  - convnets
+  - convolutional neural network
+- id: skill.rnn
+  name: Recurrent Neural Networks
+  category: Artificial Intelligence
+  aliases:
+  - gru
+  - long short term memory
+  - lstm
+  - recurrent neural network
+  - rnn
+- id: skill.gan
+  name: Generative Adversarial Networks
+  category: Artificial Intelligence
+  aliases:
+  - gan
+  - gans
+  - generative adversarial network
+- id: skill.transfer_learning
+  name: Transfer Learning
+  category: Artificial Intelligence
+  aliases:
+  - fine-tuning
+  - finetuning
+  - model fine-tuning
+  - pretrained models
+- id: skill.sentiment_analysis
+  name: Sentiment Analysis
+  category: Artificial Intelligence
+  aliases:
+  - opinion mining
+  - sentiment classification
+- id: skill.named_entity_recognition
+  name: Named Entity Recognition
+  category: Artificial Intelligence
+  aliases:
+  - entity extraction
+  - entity recognition
+  - ner
+- id: skill.text_classification
+  name: Text Classification
+  category: Artificial Intelligence
+  aliases:
+  - document classification
+  - text categorization
+- id: skill.tokenization
+  name: Tokenization
+  category: Artificial Intelligence
+  aliases:
+  - lemmatization
+  - stemming
+  - text parsing
+  - text tokenization
+- id: skill.word_embeddings
+  name: Word Embeddings
+  category: Artificial Intelligence
+  aliases:
+  - glove
+  - text embeddings
+  - word embedding
+  - word2vec
+- id: skill.topic_modeling
+  name: Topic Modeling
+  category: Artificial Intelligence
+  aliases:
+  - bertopic
+  - latent dirichlet allocation
+  - lda
+- id: skill.computer_vision
+  name: Computer Vision
+  category: Artificial Intelligence
+  aliases:
+  - cv
+  - image processing
+  - vision ai
+  includes:
+  - skill.image_classification
+  - skill.image_segmentation
+  - skill.object_detection
+  - skill.ocr
+  - skill.opencv
+- id: skill.object_detection
+  name: Object Detection
+  category: Artificial Intelligence
+  aliases:
+  - bounding box detection
+  - faster r-cnn
+  - ssd object detection
+  - yolo
+- id: skill.image_segmentation
+  name: Image Segmentation
+  category: Artificial Intelligence
+  aliases:
+  - instance segmentation
+  - mask r-cnn
+  - semantic segmentation
+  - u-net
+- id: skill.image_classification
+  name: Image Classification
+  category: Artificial Intelligence
+  aliases:
+  - image classifier
+  - image recognition
+  - visual recognition
+- id: skill.ocr
+  name: Optical Character Recognition
+  category: Artificial Intelligence
+  aliases:
+  - ocr
+  - pytesseract
+  - tesseract
+  - text recognition from images
+- id: skill.data_engineering
+  name: Data Engineering
+  category: Artificial Intelligence
+  aliases:
+  - big data engineering
+  - data pipeline engineering
+  includes:
+  - skill.airflow
+  - skill.data_ingestion
+  - skill.data_modeling
+  - skill.data_warehousing
+  - skill.etl
+  - skill.kafka
+  - skill.spark
+- id: skill.data_warehousing
+  name: Data Warehousing
+  category: Artificial Intelligence
+  aliases:
+  - data warehouse
+  - dwh
+  includes:
+  - skill.bigquery
+  - skill.redshift
+  - skill.snowflake
+- id: skill.data_modeling
+  name: Data Modeling
+  category: Artificial Intelligence
+  aliases:
+  - dimensional modeling
+  - relational modeling
+  - snowflake schema
+  - star schema
+- id: skill.data_ingestion
+  name: Data Ingestion
+  category: Artificial Intelligence
+  aliases:
+  - batch ingestion
+  - data streaming
+  - event ingestion
+  - stream processing
+- id: skill.mlops
+  name: MLOps
+  category: Artificial Intelligence
+  aliases:
+  - machine learning operations
+  - ml ops
+  includes:
+  - skill.dvc
+  - skill.feature_store
+  - skill.kubeflow
+  - skill.mlflow
+  - skill.model_deployment
+  - skill.model_monitoring
+  - skill.model_registry
+- id: skill.model_deployment
+  name: Model Deployment
+  category: Artificial Intelligence
+  aliases:
+  - ml inference endpoint
+  - model serving
+  - model serving api
+  - torchserve
+  - triton
+- id: skill.model_monitoring
+  name: Model Monitoring
+  category: Artificial Intelligence
+  aliases:
+  - concept drift
+  - data drift
+  - drift detection
+  - evidently ai
+  - ml observability
+- id: skill.feature_store
+  name: Feature Store
+  category: Artificial Intelligence
+  aliases:
+  - feast
+  - feature platform
+  - feature store management
+- id: skill.model_registry
+  name: Model Registry
+  category: Artificial Intelligence
+  aliases:
+  - model artifacts registry
+  - model versioning
+  - wandb
+  - weights & biases
+- id: skill.reinforcement_learning
+  name: Reinforcement Learning
+  category: Artificial Intelligence
+  aliases:
+  - deep reinforcement learning
+  - policy gradients
+  - q-learning
+  - reinforcement-learning
+  - rl
+- id: skill.backend_development
+  name: Backend Development
+  category: Backend Engineering
+  aliases:
+  - backend
+  - backend engineering
+  - server side engineering
+  - server-side development
+  includes:
+  - skill.api_design
+  - skill.graphql
+  - skill.grpc
+  - skill.microservices
+  - skill.rest_api
+  - skill.websockets
+- id: skill.grpc
+  name: gRPC
+  category: Backend Engineering
+  aliases:
+  - grpc
+  - protobuf
+  - protocol buffers
+- id: skill.api_design
+  name: API Design
+  category: Backend Engineering
+  aliases:
+  - api architecture
+  - api development
+  - api endpoint design
+  - swagger
+- id: skill.django_rest_framework
+  name: Django REST Framework
+  category: Backend Engineering
+  aliases:
+  - django rest
+  - django rest framework
+- id: skill.orm
+  name: ORM
+  category: Backend Engineering
+  aliases:
+  - django orm
+  - hibernate
+  - object relational mapping
+  - prisma
+  - sqlalchemy
+- id: skill.django_templates
+  name: Django Templates
+  category: Backend Engineering
+  aliases:
+  - django template language
+  - dtl
+- id: skill.fastapi
+  name: FastAPI
+  category: Backend Engineering
+  aliases:
+  - fast api
+  - fastapi framework
+  includes:
+  - skill.openapi
+  - skill.pydantic
+  - skill.starlette
+- id: skill.pydantic
+  name: Pydantic
+  category: Backend Engineering
+  aliases:
+  - pydantic models
+  - pydantic v2
+  - pydantic validation
+- id: skill.starlette
+  name: Starlette
+  category: Backend Engineering
+  aliases:
+  - starlette asgi
+  - starlette framework
+- id: skill.openapi
+  name: OpenAPI
+  category: Backend Engineering
+  aliases:
+  - openapi spec
+  - openapi specification
+  - swagger ui
+- id: skill.express
+  name: Express.js
+  category: Backend Engineering
+  aliases:
+  - express
+  - express js
+  - expressjs
+- id: skill.nest_js
+  name: NestJS
+  category: Backend Engineering
+  aliases:
+  - nest js
+  - nest.js
+  - nestjs
+- id: skill.event_loop
+  name: Event Loop
+  category: Backend Engineering
+  aliases:
+  - asynchronous node
+  - libuv
+  - non-blocking io
+- id: skill.spring_boot
+  name: Spring Boot
+  category: Backend Engineering
+  aliases:
+  - spring boot 3
+  - springboot
+  includes:
+  - skill.spring_data_jpa
+  - skill.spring_mvc
+  - skill.spring_security
+- id: skill.spring_mvc
+  name: Spring MVC
+  category: Backend Engineering
+  aliases:
+  - spring rest controllers
+  - spring-mvc
+- id: skill.spring_data_jpa
+  name: Spring Data JPA
+  category: Backend Engineering
+  aliases:
+  - jpa hibernate
+  - spring data
+  - spring jpa
+- id: skill.spring_security
+  name: Spring Security
+  category: Backend Engineering
+  aliases:
+  - spring auth
+  - spring-security
+- id: skill.frontend_development
+  name: Frontend Development
+  category: Frontend Engineering
+  aliases:
+  - client-side development
+  - front-end
+  - frontend
+  - ui development
+  includes:
+  - skill.angular
+  - skill.dom_manipulation
+  - skill.html_css
+  - skill.javascript
+  - skill.react
+  - skill.responsive_design
+  - skill.vuejs
+  - skill.web_performance
+- id: skill.dom_manipulation
+  name: DOM Manipulation
+  category: Frontend Engineering
+  aliases:
+  - browser dom
+  - document object model
+  - virtual dom
+- id: skill.responsive_design
+  name: Responsive Design
+  category: Frontend Engineering
+  aliases:
+  - css grid
+  - flexbox
+  - mobile-first design
+  - responsive web design
+- id: skill.web_performance
+  name: Web Performance
+  category: Frontend Engineering
+  aliases:
+  - core web vitals
+  - lazy loading
+  - lighthouse score
+  - web optimization
+- id: skill.react_hooks
+  name: React Hooks
+  category: Frontend Engineering
+  aliases:
+  - custom hooks
+  - react custom hooks
+  - useeffect
+  - usestate
+- id: skill.redux
+  name: Redux
+  category: Frontend Engineering
+  aliases:
+  - redux toolkit
+  - redux-saga
+  - rtk
+  - zustand
+- id: skill.react_router
+  name: React Router
+  category: Frontend Engineering
+  aliases:
+  - react router dom
+  - react-router
+- id: skill.nextjs
+  name: Next.js
+  category: Frontend Engineering
+  aliases:
+  - next js
+  - next.js 14
+  - next.js 15
+  - nextjs
+- id: skill.jsx
+  name: JSX
+  category: Frontend Engineering
+  aliases:
+  - jsx syntax
+  - react jsx
+  - tsx
+- id: skill.vuex
+  name: Vuex
+  category: Frontend Engineering
+  aliases:
+  - vuex store
+- id: skill.pinia
+  name: Pinia
+  category: Frontend Engineering
+  aliases:
+  - pinia store
+- id: skill.vue_router
+  name: Vue Router
+  category: Frontend Engineering
+  aliases:
+  - vue-router
+- id: skill.nuxt
+  name: Nuxt.js
+  category: Frontend Engineering
+  aliases:
+  - nuxt
+  - nuxt js
+  - nuxtjs
+- id: skill.rxjs
+  name: RxJS
+  category: Frontend Engineering
+  aliases:
+  - observables
+  - reactive extensions
+  - rxjs streams
+- id: skill.ngrx
+  name: NgRx
+  category: Frontend Engineering
+  aliases:
+  - ngrx state management
+  - ngrx store
+- id: skill.relational_databases
+  name: Relational Databases
+  category: Database Systems
+  aliases:
+  - rdbms
+  - relational database
+  - relational db
+  - sql databases
+  includes:
+  - skill.database_indexing
+  - skill.database_normalization
+  - skill.mssql
+  - skill.mysql
+  - skill.oracle_db
+  - skill.postgresql
+  - skill.query_optimization
+  - skill.sql
+- id: skill.database_indexing
+  name: Database Indexing
+  category: Database Systems
+  aliases:
+  - b-tree index
+  - database indexes
+  - gin index
+  - index optimization
+  - indexing strategies
+- id: skill.query_optimization
+  name: Query Optimization
+  category: Database Systems
+  aliases:
+  - execution plan analysis
+  - explain analyze
+  - query tuning
+  - sql optimization
+  - sql tuning
+- id: skill.database_normalization
+  name: Database Normalization
+  category: Database Systems
+  aliases:
+  - 1nf 2nf 3nf
+  - database schema design
+  - entity relationship diagram
+  - erd
+  - normalization
+- id: skill.nosql
+  name: NoSQL Databases
+  category: Database Systems
+  aliases:
+  - document database
+  - key-value store
+  - non-relational databases
+  - nosql
+  includes:
+  - skill.cassandra
+  - skill.couchdb
+  - skill.dynamodb
+  - skill.mongodb
+- id: skill.couchdb
+  name: Apache CouchDB
+  category: Database Systems
+  aliases:
+  - couch db
+  - couchdb
+- id: skill.caching
+  name: Caching Systems
+  category: Database Systems
+  aliases:
+  - cache management
+  - cache strategies
+  - caching
+  - in-memory cache
+  includes:
+  - skill.memcached
+  - skill.redis
+- id: skill.memcached
+  name: Memcached
+  category: Database Systems
+  aliases:
+  - memcache
+- id: skill.vector_databases
+  name: Vector Databases
+  category: Database Systems
+  aliases:
+  - similarity search
+  - vector database
+  - vector db
+  - vector store
+  includes:
+  - skill.chroma_db
+  - skill.milvus
+  - skill.pinecone
+  - skill.qdrant
+  - skill.weaviate
+- id: skill.pinecone
+  name: Pinecone
+  category: Database Systems
+  aliases:
+  - pinecone vector db
+- id: skill.weaviate
+  name: Weaviate
+  category: Database Systems
+  aliases:
+  - weaviate vector search
+- id: skill.milvus
+  name: Milvus
+  category: Database Systems
+  aliases:
+  - milvus vector database
+- id: skill.qdrant
+  name: Qdrant
+  category: Database Systems
+  aliases:
+  - qdrant vector db
+- id: skill.chroma_db
+  name: ChromaDB
+  category: Database Systems
+  aliases:
+  - chroma
+  - chroma db
+  - chromadb
+- id: skill.cloud_computing
+  name: Cloud Computing
+  category: Cloud & DevOps
+  aliases:
+  - cloud
+  - cloud infrastructure
+  - cloud platforms
+  includes:
+  - skill.aws
+  - skill.azure
+  - skill.gcp
+  - skill.serverless
+- id: skill.serverless
+  name: Serverless Architecture
+  category: Cloud & DevOps
+  aliases:
+  - faas
+  - function as a service
+  - serverless
+- id: skill.devops
+  name: DevOps
+  category: Cloud & DevOps
+  aliases:
+  - dev ops
+  - devsecops
+  - site reliability engineering
+  - sre
+  includes:
+  - skill.cicd
+  - skill.docker
+  - skill.iac
+  - skill.kubernetes
+  - skill.monitoring_alerting
+- id: skill.monitoring_alerting
+  name: Monitoring & Alerting
+  category: Cloud & DevOps
+  aliases:
+  - application monitoring
+  - elk stack
+  - monitoring and alerting
+  - observability
+  includes:
+  - skill.datadog
+  - skill.grafana
+  - skill.new_relic
+  - skill.prometheus
+- id: skill.aws_ec2
+  name: AWS EC2
+  category: Cloud & DevOps
+  aliases:
+  - ec2
+  - elastic compute cloud
+- id: skill.aws_s3
+  name: AWS S3
+  category: Cloud & DevOps
+  aliases:
+  - aws s3 buckets
+  - s3
+  - simple storage service
+- id: skill.aws_lambda
+  name: AWS Lambda
+  category: Cloud & DevOps
+  aliases:
+  - aws lambda
+  - aws serverless lambda
+  - lambda functions
+- id: skill.aws_rds
+  name: AWS RDS
+  category: Cloud & DevOps
+  aliases:
+  - amazon rds
+  - rds
+  - relational database service
+- id: skill.aws_iam
+  name: AWS IAM
+  category: Cloud & DevOps
+  aliases:
+  - aws identity and access management
+  - iam policies
+  - iam roles
+- id: skill.aws_cloudformation
+  name: AWS CloudFormation
+  category: Cloud & DevOps
+  aliases:
+  - aws cfn
+  - cloudformation
+- id: skill.azure_vms
+  name: Azure Virtual Machines
+  category: Cloud & DevOps
+  aliases:
+  - azure compute
+  - azure vm
+- id: skill.azure_blob_storage
+  name: Azure Blob Storage
+  category: Cloud & DevOps
+  aliases:
+  - azure blob
+  - blob storage
+- id: skill.azure_functions
+  name: Azure Functions
+  category: Cloud & DevOps
+  aliases:
+  - azure function apps
+  - azure serverless
+- id: skill.azure_app_services
+  name: Azure App Service
+  category: Cloud & DevOps
+  aliases:
+  - azure app services
+  - azure web app
+- id: skill.google_compute_engine
+  name: Google Compute Engine
+  category: Cloud & DevOps
+  aliases:
+  - gce
+  - gcp compute engine
+- id: skill.google_cloud_storage
+  name: Google Cloud Storage
+  category: Cloud & DevOps
+  aliases:
+  - gcp cloud storage
+  - gcs
+- id: skill.google_cloud_functions
+  name: Google Cloud Functions
+  category: Cloud & DevOps
+  aliases:
+  - cloud functions
+  - gcp cloud functions
+- id: skill.iac
+  name: Infrastructure as Code
+  category: Cloud & DevOps
+  aliases:
+  - iac
+  - infrastructure-as-code
+  includes:
+  - skill.ansible
+  - skill.pulumi
+  - skill.terraform
+- id: skill.pulumi
+  name: Pulumi
+  category: Cloud & DevOps
+  aliases:
+  - pulumi iac
+- id: skill.mobile_development
+  name: Mobile App Development
+  category: Mobile Development
+  aliases:
+  - ios & android
+  - mobile apps
+  - mobile development
+  - mobile engineering
+  includes:
+  - skill.android
+  - skill.flutter
+  - skill.ios
+  - skill.react_native
+- id: skill.uikit
+  name: UIKit
+  category: Mobile Development
+  aliases:
+  - cocoa touch
+  - ui kit
+- id: skill.cocoapods
+  name: CocoaPods
+  category: Mobile Development
+  aliases:
+  - cocoapods
+  - spm
+  - swift package manager
+- id: skill.android_sdk
+  name: Android SDK
+  category: Mobile Development
+  aliases:
+  - android-sdk
+  - android ndk
+- id: skill.gradle
+  name: Gradle
+  category: Mobile Development
+  aliases:
+  - gradle build
+  - gradle build tool
+- id: skill.cybersecurity
+  name: Cybersecurity
+  category: Cybersecurity & Networking
+  aliases:
+  - cyber security
+  - information security
+  - infosec
+  includes:
+  - skill.application_security
+  - skill.cryptography
+  - skill.network_security
+  - skill.penetration_testing
+  - skill.soc_analysis
+  - skill.vulnerability_assessment
+- id: skill.application_security
+  name: Application Security
+  category: Cybersecurity & Networking
+  aliases:
+  - appsec
+  - dast
+  - sast
+  - secure coding
+  - software security
+- id: skill.network_security
+  name: Network Security
+  category: Cybersecurity & Networking
+  aliases:
+  - ids
+  - ips
+  - network defense
+  - network security
+  includes:
+  - skill.firewall
+- id: skill.vulnerability_assessment
+  name: Vulnerability Assessment
+  category: Cybersecurity & Networking
+  aliases:
+  - nessus
+  - qualys
+  - vulnerability scanning
+- id: skill.soc_analysis
+  name: SOC Analysis
+  category: Cybersecurity & Networking
+  aliases:
+  - incident response
+  - security operations center
+  - siem analysis
+  - threat hunting
+- id: skill.network_protocols
+  name: Network Protocols
+  category: Cybersecurity & Networking
+  aliases:
+  - computer networks
+  - network communication
+  - networking
+  includes:
+  - skill.dns
+  - skill.http_https
+  - skill.tcp_ip
+  - skill.tls_ssl
+  - skill.websockets
+- id: skill.tcp_ip
+  name: TCP/IP
+  category: Cybersecurity & Networking
+  aliases:
+  - ip networking
+  - osi model
+  - tcp
+  - udp
+- id: skill.http_https
+  name: HTTP/HTTPS
+  category: Cybersecurity & Networking
+  aliases:
+  - http
+  - http/2
+  - http/3
+  - https
+- id: skill.dns
+  name: DNS
+  category: Cybersecurity & Networking
+  aliases:
+  - dns records
+  - domain name system
+- id: skill.tls_ssl
+  name: TLS/SSL
+  category: Cybersecurity & Networking
+  aliases:
+  - ssl
+  - ssl certificates
+  - tls handshake
+  - tls_ssl
+- id: skill.websockets
+  name: WebSockets
+  category: Cybersecurity & Networking
+  aliases:
+  - socket.io
+  - websocket
+  - ws
+  - wss
+- id: skill.software_testing
+  name: Software Testing
+  category: Software Testing & QA
+  aliases:
+  - quality assurance
+  - software qa
+  - software quality
+  includes:
+  - skill.api_testing
+  - skill.automation_testing
+  - skill.e2e_testing
+  - skill.integration_testing
+  - skill.load_testing
+  - skill.manual_testing
+  - skill.performance_testing
+  - skill.regression_testing
+  - skill.unit_testing
+  - skill.functional_testing
+  - skill.gui_testing
+  - skill.backend_testing
+  - skill.test_cases
+  - skill.test_scripts
+  - skill.test_management
+  - skill.accessibility_testing
+- id: skill.automation_testing
+  name: Automation Testing
+  category: Software Testing & QA
+  aliases:
+  - automated testing
+  - qa automation
+  - test automation
+  includes:
+  - skill.appium
+  - skill.cypress
+  - skill.junit
+  - skill.playwright
+  - skill.pytest
+  - skill.selenium
+  - skill.testng
+- id: skill.pytest
+  name: Pytest
+  category: Software Testing & QA
+  aliases:
+  - py.test
+  - python pytest
+- id: skill.integration_testing
+  name: Integration Testing
+  category: Software Testing & QA
+  aliases:
+  - integration test
+  - service testing
+- id: skill.e2e_testing
+  name: End-to-End Testing
+  category: Software Testing & QA
+  aliases:
+  - e2e test
+  - end to end testing
+  - system testing
+- id: skill.data_structures_and_algorithms
+  name: Data Structures & Algorithms
+  category: Core Computer Science
+  aliases:
+  - algorithms and data structures
+  - data structures and algorithms
+  - dsa
+  includes:
+  - skill.algorithms
+  - skill.data_structures
+  - skill.dynamic_programming
+  - skill.graph_algorithms
+  - skill.sorting_searching
+- id: skill.algorithms
+  name: Algorithms
+  category: Core Computer Science
+  aliases:
+  - algorithmic problem solving
+  - big o notation
+  - computational complexity
+- id: skill.data_structures
+  name: Data Structures
+  category: Core Computer Science
+  aliases:
+  - arrays
+  - graphs
+  - hash tables
+  - heaps
+  - linked lists
+  - queues
+  - stacks
+  - trees
+- id: skill.sorting_searching
+  name: Sorting & Searching
+  category: Core Computer Science
+  aliases:
+  - binary search
+  - mergesort
+  - quicksort
+  - search algorithms
+- id: skill.graph_algorithms
+  name: Graph Algorithms
+  category: Core Computer Science
+  aliases:
+  - bfs
+  - dfs
+  - dijkstra
+  - minimum spanning tree
+  - shortest path
+- id: skill.dynamic_programming
+  name: Dynamic Programming
+  category: Core Computer Science
+  aliases:
+  - dp
+  - memoization
+  - tabulation
+- id: skill.software_engineering
+  name: Software Engineering
+  category: Core Computer Science
+  aliases:
+  - software architecture principles
+  - software design
+  includes:
+  - skill.clean_architecture
+  - skill.concurrent_programming
+  - skill.design_patterns
+  - skill.functional_programming
+  - skill.oop
+  - skill.system_design
+- id: skill.clean_architecture
+  name: Clean Architecture
+  category: Core Computer Science
+  aliases:
+  - clean code
+  - ddd
+  - domain driven design
+  - hexagonal architecture
+  - onion architecture
+- id: skill.functional_programming
+  name: Functional Programming
+  category: Core Computer Science
+  aliases:
+  - fp
+  - higher order functions
+  - immutability
+  - pure functions
+- id: skill.concurrent_programming
+  name: Concurrent Programming
+  category: Core Computer Science
+  aliases:
+  - async await
+  - concurrency
+  - coroutines
+  - multithreading
+  - parallelism
+  - thread safety
+- id: skill.mlflow
+  name: MLflow
+  category: Artificial Intelligence
+  aliases:
+  - ml flow
+  - ml-flow
+- id: skill.dvc
+  name: DVC
+  category: Artificial Intelligence
+  aliases:
+  - data version control
+  - dvc.org
+- id: skill.kubeflow
+  name: Kubeflow
+  category: Artificial Intelligence
+  aliases:
+  - kube-flow
+  - kubeflow pipelines
+- id: skill.prometheus
+  name: Prometheus
+  category: Cloud & DevOps
+  aliases:
+  - prometheus monitoring
+- id: skill.grafana
+  name: Grafana
+  category: Cloud & DevOps
+  aliases:
+  - grafana dashboards
+- id: skill.datadog
+  name: Datadog
+  category: Cloud & DevOps
+  aliases:
+  - datadog monitoring
+  - datadog apm
+- id: skill.new_relic
+  name: New Relic
+  category: Cloud & DevOps
+  aliases:
+  - newrelic
+  - new relic apm
+- id: skill.k6
+  name: k6
+  category: Software Testing & QA
+  aliases:
+  - k6 load testing
+  - grafana k6
+- id: skill.gatling
+  name: Gatling
+  category: Software Testing & QA
+  aliases:
+  - gatling stress test
+- id: skill.functional_testing
+  name: Functional Testing
+  aliases:
+  - functional test
+  - functional tests
+  category: Software Testing & QA
+- id: skill.gui_testing
+  name: GUI Testing
+  aliases:
+  - ui testing
+  - ui/ux testing
+  - user interface testing
+  - cross-browser testing
+  - visual testing
+  category: Software Testing & QA
+- id: skill.backend_testing
+  name: Backend Testing
+  aliases:
+  - server-side testing
+  - backend qa
+  category: Software Testing & QA
+- id: skill.test_cases
+  name: Test Cases
+  aliases:
+  - test case design
+  - test scenarios
+  - test case writing
+  - test case development
+  category: Software Testing & QA
+- id: skill.test_scripts
+  name: Test Scripts
+  aliases:
+  - test script development
+  - test scripting
+  category: Software Testing & QA
+- id: skill.test_management
+  name: Test Management
+  aliases:
+  - test planning
+  - test coordination
+  - qa management
+  - test management tools
+  category: Software Testing & QA
+- id: skill.accessibility_testing
+  name: Accessibility Testing
+  aliases:
+  - wcag
+  - a11y
+  - ada compliance testing
+  - accessibility compliance
+  category: Software Testing & QA
+- id: skill.communication
+  name: Communication
+  aliases:
+  - technical communication
+  - verbal communication
+  - written communication
+  - communication skills
+  - interpersonal communication
+  - stakeholder communication
+  category: Soft Skills
+- id: skill.problem_solving
+  name: Problem Solving
+  aliases:
+  - analytical thinking
+  - critical thinking
+  - troubleshooting
+  - debugging skills
+  category: Soft Skills
+- id: skill.project_management
+  name: Project Management
+  aliases:
+  - project coordination
+  - project planning
+  - project scheduling
+  category: Soft Skills
 
-  - id: skill.sql
-    name: SQL
-    aliases: [t-sql, tsql, "structured query language"]
-    category: language
-
-  - id: skill.pandas
-    name: Pandas
-    aliases: [pandas]
-    category: library
-
-  - id: skill.sklearn
-    name: Scikit-learn
-    aliases: [sklearn, "scikit learn", scikitlearn]
-    category: library
-
-  - id: skill.xgboost
-    name: XGBoost
-    aliases: [xgb, "x-gboost"]
-    category: library
-
-  - id: skill.powerbi
-    name: Power BI
-    aliases: [powerbi, "power-bi", pbi]
-    category: tool
-
-  - id: skill.dax
-    name: DAX
-    aliases: ["data analysis expressions"]
-    category: language
-
-  - id: skill.excel
-    name: Excel
-    aliases: ["microsoft excel", "ms excel"]
-    category: tool
-
-  - id: skill.tableau
-    name: Tableau
-    aliases: []
-    category: tool
-
-  - id: skill.azure_ml
-    name: Azure ML
-    aliases: ["azure machine learning", azureml]
-    category: platform
-
-  - id: skill.react
-    name: React
-    aliases: [reactjs, "react.js"]
-    category: framework
-
-  - id: skill.flutter
-    name: Flutter
-    aliases: []
-    category: framework
-
-  - id: skill.selenium
-    name: Selenium
-    aliases: [webdriver]
-    category: tool
-
-  - id: skill.siem
-    name: SIEM
-    aliases: [splunk, qradar, "security information and event management"]
-    category: domain
-
-  # ──────────────────────────────────────────────────────────
-  # --- Sprint 2 additions (تخمين - راجع الملحوظة فوق) ---
-  # ──────────────────────────────────────────────────────────
-
-  # --- Data / BI ---
-  - id: skill.numpy
-    name: NumPy
-    aliases: [numpy]
-    category: library
-
-  - id: skill.matplotlib
-    name: Matplotlib
-    aliases: [matplotlib, "matplotlib.pyplot"]
-    category: library
-
-  - id: skill.mysql
-    name: MySQL
-    aliases: ["my sql"]
-    category: tool
-
-  - id: skill.postgresql
-    name: PostgreSQL
-    aliases: [postgres, "postgre sql"]
-    category: tool
-
-  - id: skill.tensorflow
-    name: TensorFlow
-    aliases: [tf]
-    category: library
-
-  - id: skill.pytorch
-    name: PyTorch
-    aliases: [torch]
-    category: library
-
-  # --- Frontend / Mobile / Web ---
-  - id: skill.javascript
-    name: JavaScript
-    aliases: [js, "java script"]
-    category: language
-
-  - id: skill.typescript
-    name: TypeScript
-    aliases: [ts]
-    category: language
-
-  - id: skill.html_css
-    name: HTML/CSS
-    aliases: [html, css, "html5", "css3"]
-    category: language
-
-  - id: skill.nodejs
-    name: Node.js
-    aliases: [node, nodejs, "node js"]
-    category: platform
-
-  - id: skill.vuejs
-    name: Vue.js
-    aliases: [vue, vuejs]
-    category: framework
-
-  - id: skill.angular
-    name: Angular
-    aliases: [angularjs]
-    category: framework
-
-  - id: skill.kotlin
-    name: Kotlin
-    aliases: []
-    category: language
-
-  - id: skill.swift
-    name: Swift
-    aliases: []
-    category: language
-
-  # --- QA ---
-  - id: skill.appium
-    name: Appium
-    aliases: []
-    category: tool
-
-  - id: skill.postman
-    name: Postman
-    aliases: []
-    category: tool
-
-  - id: skill.jira
-    name: Jira
-    aliases: []
-    category: tool
-
-  # --- Security ---
-  - id: skill.penetration_testing
-    name: Penetration Testing
-    aliases: [pentest, "pen testing", "pen-testing"]
-    category: domain
-
-  - id: skill.nmap
-    name: Nmap
-    aliases: []
-    category: tool
-
-  - id: skill.wireshark
-    name: Wireshark
-    aliases: []
-    category: tool
-
-  # --- Cross-cutting engineering tools ---
-  - id: skill.git
-    name: Git
-    aliases: [github, gitlab]
-    category: tool
-
-  - id: skill.docker
-    name: Docker
-    aliases: [containerization]
-    category: tool
-
-  - id: skill.aws
-    name: AWS
-    aliases: ["amazon web services"]
-    category: platform
-
-  - id: skill.azure
-    name: Azure
-    aliases: ["microsoft azure"]
-    category: platform
-
-  - id: skill.gcp
-    name: GCP
-    aliases: ["google cloud", "google cloud platform"]
-    category: platform
-
-  # --- AI instruction and creative AI ---
-  - id: skill.chatgpt
-    name: ChatGPT
-    aliases: [chatgpt, "chat gpt"]
-    category: ai_assistant
-
-  - id: skill.claude
-    name: Claude
-    aliases: []
-    category: ai_assistant
-
-  - id: skill.gemini
-    name: Gemini
-    aliases: ["google gemini"]
-    category: ai_assistant
-
-  - id: skill.microsoft_copilot
-    name: Microsoft Copilot
-    aliases: [copilot]
-    category: ai_assistant
-
-  - id: skill.perplexity
-    name: Perplexity
-    aliases: []
-    category: ai_assistant
-
-  - id: skill.google_ai_studio
-    name: Google AI Studio
-    aliases: ["ai studio"]
-    category: ai_assistant
-
-  - id: skill.notebooklm
-    name: NotebookLM
-    aliases: ["notebook lm"]
-    category: ai_assistant
-
-  - id: skill.prompt_engineering
-    name: Prompt Engineering
-    aliases: []
-    category: ai_practice
-
-  - id: skill.ai_image_generation
-    name: AI Image Generation
-    aliases: []
-    category: generative_ai
-
-  - id: skill.midjourney
-    name: Midjourney
-    aliases: []
-    category: generative_ai
-
-  - id: skill.chatgpt_image_generation
-    name: ChatGPT Image Generation
-    aliases: ["chatgpt image gen"]
-    category: generative_ai
-
-  - id: skill.adobe_firefly
-    name: Adobe Firefly
-    aliases: [firefly]
-    category: generative_ai
-
-  - id: skill.leonardo_ai
-    name: Leonardo AI
-    aliases: [leonardo]
-    category: generative_ai
-
-  - id: skill.flux
-    name: Flux
-    aliases: []
-    category: generative_ai
-
-  - id: skill.ideogram
-    name: Ideogram
-    aliases: []
-    category: generative_ai
-
-  - id: skill.recraft
-    name: Recraft
-    aliases: []
-    category: generative_ai
-
-  - id: skill.ai_video_generation
-    name: AI Video Generation
-    aliases: []
-    category: generative_ai
-
-  - id: skill.runway
-    name: Runway
-    aliases: ["runway ml"]
-    category: generative_ai
-
-  - id: skill.kling
-    name: Kling
-    aliases: []
-    category: generative_ai
-
-  - id: skill.pika
-    name: Pika
-    aliases: []
-    category: generative_ai
-
-  - id: skill.luma
-    name: Luma
-    aliases: []
-    category: generative_ai
-
-  - id: skill.heygen
-    name: HeyGen
-    aliases: ["hey gen"]
-    category: generative_ai
-
-  - id: skill.synthesia
-    name: Synthesia
-    aliases: []
-    category: generative_ai
-
-  - id: skill.elevenlabs
-    name: ElevenLabs
-    aliases: ["eleven labs"]
-    category: generative_ai
-
-  - id: skill.playht
-    name: PlayHT
-    aliases: ["play ht"]
-    category: generative_ai
-
-  - id: skill.adobe_podcast
-    name: Adobe Podcast
-    aliases: []
-    category: generative_ai
-
-  - id: skill.suno
-    name: Suno
-    aliases: []
-    category: generative_ai
-
-  - id: skill.udio
-    name: Udio
-    aliases: []
-    category: generative_ai
-
-  - id: skill.canva_ai
-    name: Canva AI
-    aliases: ["canva ai"]
-    category: ai_design
-
-  - id: skill.gamma
-    name: Gamma
-    aliases: []
-    category: ai_design
-
-  - id: skill.tome
-    name: Tome
-    aliases: []
-    category: ai_design
-
-  - id: skill.adobe_express
-    name: Adobe Express
-    aliases: []
-    category: design
-
-  - id: skill.figma_ai
-    name: Figma AI
-    aliases: []
-    category: ai_design
-
-  - id: skill.ai_copywriting
-    name: AI Copywriting
-    aliases: []
-    category: ai_marketing
-
-  - id: skill.social_media_content_creation
-    name: Social Media Content Creation
-    aliases: []
-    category: ai_marketing
-
-  - id: skill.email_marketing
-    name: Email Marketing
-    aliases: []
-    category: marketing
-
-  - id: skill.seo_with_ai
-    name: SEO with AI
-    aliases: ["ai seo"]
-    category: ai_marketing
-
-  - id: skill.content_strategy
-    name: Content Strategy
-    aliases: []
-    category: marketing
-
-  - id: skill.ai_marketing_campaigns
-    name: AI Marketing Campaigns
-    aliases: ["ai powered marketing campaigns"]
-    category: ai_marketing
-
-  - id: skill.branding_with_ai
-    name: Branding with AI
-    aliases: ["ai branding"]
-    category: ai_marketing

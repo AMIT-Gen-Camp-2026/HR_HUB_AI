@@ -25,6 +25,7 @@ from app.pipeline.run import (
     get_extraction_metadata,
 )
 from app.providers.hf_provider import ModelInferenceError
+from app.providers.judge_provider import JudgeProviderError
 from app.schemas.cv import CVSchema, JobDescription
 from app.security.auth import require_api_key
 from app.security.file_validator import (
@@ -140,6 +141,14 @@ def evaluate_cv():
 
         try:
             ranking_result = compute_ranking(validated_cv, job_description)
+        except (ModelInferenceError, JudgeProviderError):
+            logger.error("Ranking judge failed across full model chain")
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Ranking model inference failed. Please try again.",
+                }
+            ), 502
         except Exception:
             logger.exception("Unexpected error during ranking")
             return jsonify({"success": False, "error": "Internal server error."}), 500

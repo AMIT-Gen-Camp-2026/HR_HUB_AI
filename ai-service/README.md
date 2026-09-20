@@ -1,5 +1,7 @@
 # AMIT Instructor Hub — AI Service -- CV-Ranking
 
+For clean-clone installation and run instructions, see [docs/SETUP_AND_RUN.md](docs/SETUP_AND_RUN.md).
+
 CV parsing, skill extraction, and candidate-to-JD ranking. Runs as its own container so
 that its dependencies, its latency profile, and its failures stay isolated from the core API.
 
@@ -11,7 +13,9 @@ that its dependencies, its latency profile, and its failures stay isolated from 
 
 > A language model is used where language is the output. A score is computed by a documented algorithm, not generated.
 
-The current ranking policy in `app/pipeline/ranking.py` is deterministic and does not call a model. The score is based on required-skill coverage plus a bounded preferred-skill bonus; semantic fit remains available as diagnostic metadata but has zero weight in the authoritative score.
+The current ranking policy uses a taxonomy-gated LLM capability judge to produce
+evidence-bound `skill_evaluations`. The final score is computed from fractional
+satisfaction values using required-skill coverage plus a bounded preferred-skill bonus.
 
 Nothing in this service writes to an instructor record. Every output is a draft.
 

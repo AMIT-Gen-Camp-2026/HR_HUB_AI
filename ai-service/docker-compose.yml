@@ -21,9 +21,7 @@ services:
     env_file:
       - .env
     environment:
-      # ملحوظة: ui/streamlit_app.py حاليًا BASE_URL مكتوبة hardcoded كـ
-      # http://127.0.0.1:5000 - المتغير ده مش مقروء فعليًا لسه (انظر
-      # docs/DECISIONS.md لتفاصيل الفجوة دي وخطة إصلاحها).
+      # The UI uses this internal hostname when it runs inside Compose.
       AI_SERVICE_URL: http://ai-service:5000
     depends_on:
       - ai-service

@@ -1,131 +1,127 @@
-# Architecture
+# Architecture & Technical Design
 
-> This document describes the service as it actually runs today, verified against the code in `app/` and the current docs. The design history remains in `docs/DECISIONS.md`; this file is the current operational description.
+## 1. System Overview
 
-## Why the AI service is a separate container
+The **AMIT AI Service** is a Python-based backend service for CV parsing, candidate data extraction, and capability ranking against Job Descriptions. The service operates via a deterministic pipeline combining rule-based PII redaction, regex-based taxonomy resolution, structured LLM extraction, and multi-provider semantic evaluation.
 
-1. **Its dependency tree is unrelated to the core API** — `pdfplumber`, `python-docx`, optional embedding libraries, and the Hugging Face inference stack are not part of the core backend runtime.
-2. **Its latency profile is incompatible.** A core API request is milliseconds; model extraction and embeddings are seconds.
-3. **Its failure must be survivable.** Ranking has a tested kill switch (`RANKING_ENABLED`), and the extraction pipeline has a fallback model chain and a graceful `FAILED`/`EMPTY` status handling path.
-
-## The request path that actually exists
-
-### Unified evaluation — `POST /api/v1/cv/evaluate`
-
-This is a single multipart request: the client uploads the CV file and a JSON `job_description`, and the service extracts the CV and optionally ranks it in the same request.
-
-```text
-app/main.py
-  ├─ validate `file` and `job_description`
-  ├─ validate file extension / contents
-  ├─ extract raw text from .pdf or .docx
-  └─ call clean_and_query()
-
-app/pipeline/run.py::clean_and_query()
-  ├─ clean_cv_text()
-  ├─ build snapshot cache key from cleaned content + config + versions
-  ├─ extract contact info before redaction
-  ├─ redact() for PII stripping
-  ├─ build_prompt() with randomized delimiter around text
-  ├─ assert_clean() safety gate
-  ├─ query_model() via Hugging Face Inference Providers with MODEL_CHAIN fallback
-  ├─ parse_and_validate() -> CVSchema
-  ├─ restore email/phone from regex extraction
-  ├─ taxonomy recovery scan using exact taxonomy names/aliases
-  ├─ cache valid extraction payload in process memory
-  └─ if ranking enabled: rank(validated_cv, job_description)
+```
++-------------+      +------------------+      +--------------------+      +--------------------+
+|  CV Upload  | ---> | File Validation  | ---> |  Text Extraction   | ---> | PII Redaction &    |
+| (PDF/DOCX)  |      |  (Magic Bytes)   |      | (pdfplumber/docx)  |      |   Normalization    |
++-------------+      +------------------+      +--------------------+      +--------------------+
+                                                                                     |
+                                                                                     v
++-------------+      +------------------+      +--------------------+      +--------------------+
+| Final Score | <--- |  70/20/10 Score  | <--- |   Semantic Judge   | <--- | Taxonomy Hierarchy |
+|  & Analysis |      |   Calculation    |      | (Gemini / Fallback)|      |  & Source Multipl. |
++-------------+      +------------------+      +--------------------+      +--------------------+
 ```
 
-The route returns:
+---
 
-- `200` with `success: true` for a valid extraction and optional ranking
-- `400` for form/file validation problems
-- `401` for invalid or missing `X-API-Key` when configured
-- `422` for invalid JD shape or no extractable text
-- `502` when the model chain fails
-- `500` for unexpected internal errors
+## 2. End-to-End Pipeline Stages
 
-`min_experience_years` is accepted by `JobDescription` but is not used anywhere in the ranking code today.
+### Stage 1: File Upload & Security Validation
+- **Location:** `app/security/file_validator.py`, `app/main.py`
+- **Operations:**
+  - Enforces `MAX_CONTENT_LENGTH = 10 * 1024 * 1024` (10MB) via Flask configuration.
+  - Extension whitelist check: `.pdf`, `.docx` (`validate_extension`).
+  - Magic bytes header inspection (`validate_file_content`):
+    - PDF: verifies leading `%PDF` bytes (`header.startswith(b"%PDF")`).
+    - DOCX: verifies leading ZIP header bytes `\x50\x4B\x03\x04` (`header.startswith(b"PK\x03\x04")`).
 
-## Extraction snapshot retention
+### Stage 2: Text Extraction & Normalization
+- **Location:** `app/pipeline/extract_text_pdf.py`, `app/pipeline/extract_text_docx.py`, `app/pipeline/normalize.py`
+- **Operations:**
+  - PDF: extracts text using `pdfplumber` with `x_tolerance=1` (`extract_text_from_pdf`).
+  - DOCX: extracts text from paragraph elements and table cell elements using `python-docx` (`extract_text_from_docx`).
+  - Normalization via `clean_cv_text()`:
+    - Applies `unicodedata.normalize("NFKC", raw_text)`.
+    - Strips control characters `[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200e\u200f\u202a-\u202e\u2066-\u2069]`.
+    - Collapses whitespace (`[ \t]+` $\rightarrow$ `" "`, `\n{3,}` $\rightarrow$ `"\n\n"`).
+    - Truncates text exceeding `MAX_TEXT_LENGTH = 20000` characters (`text = text[:MAX_TEXT_LENGTH]`).
 
-`clean_and_query()` keeps validated extraction snapshots in process memory to avoid rerunning the model for the same cleaned content and configuration. The key includes:
+### Stage 3: Contact Extraction & PII Redaction
+- **Location:** `app/pipeline/redact.py`, `app/pipeline/run.py`
+- **Operations:**
+  - Pre-redaction metadata extraction: `extract_contact_info()` uses regex to extract the first matching email and Egyptian mobile number (`(?:\+?20|0)?1[0125]\d{8}\b`) to populate `CVSchema.personal_info` locally before redaction.
+  - Text redaction (`redact()`):
+    - National ID (`\b[23]\d{13}\b`) $\rightarrow$ `[NATIONAL_ID]`
+    - Email (`[\w.+-]+@[\w-]+\.[\w.-]+`) $\rightarrow$ `[EMAIL]`
+    - Phone (`(?:\+?20|0)?1[0125]\d{8}\b`) $\rightarrow$ `[PHONE]`
+    - Long digit sequences (`\b\d{10,}\b`) $\rightarrow$ `[NUMBER]`
+  - Outbound assertion: `assert_clean(payload)` checks for unredacted `NATIONAL_ID`, `EMAIL`, or `PHONE` patterns and raises `AssertionError` if any match is detected.
 
-- cleaned-content SHA-256
-- prompt version
-- schema version
-- taxonomy version
-- configured model chain
+### Stage 4: Structured Data Extraction (`CVSchema`)
+- **Location:** `app/pipeline/run.py`, `app/providers/hf_provider.py`, `app/prompts/registry.py`
+- **Operations:**
+  - Checks extraction cache using SHA-256 key (`_snapshot_key`) derived from document text hash, prompt version, schema version, taxonomy version, and model chain.
+  - Delimits redacted text inside per-request randomized tokens (`<<<CVDATA_<hex>_START>>> ... <<<CVDATA_<hex>_END>>>`).
+  - Calls HuggingFace Inference API with model chain:
+    1. Primary: `Qwen/Qwen2.5-3B-Instruct` (provider: `featherless-ai`, timeout: `60s`)
+    2. Fallback: `mistralai/Mistral-7B-Instruct-v0.2` (provider: `featherless-ai`, timeout: `60s`)
+  - Recovers explicit taxonomy skills via regex matching (`extract_explicit_skills`) against `app/skills/taxonomy.yaml`.
+  - Assembles and validates output against `CVSchema`.
 
-The cache is:
+### Stage 5: Deterministic Taxonomy Hierarchy & Multiplier Calculation
+- **Location:** `app/skills/canonicalize.py`, `app/pipeline/ranking.py`
+- **Operations:**
+  - Maps skills to canonical taxonomy IDs with exact matching, alias matching, and RapidFuzz WRatio matching (`FUZZY_THRESHOLD = 92`).
+  - Computes transitive subskill closures from `includes:` lists in `taxonomy.yaml` via graph traversal (`_hierarchy_lookup()`).
+  - Builds candidate signal sets (`_candidate_taxonomy_id_sets`):
+    - `explicit_ids`: canonical IDs from `candidate.skills`, `candidate.inferred_skills`, `candidate.certifications`.
+    - `narrative_ids`: canonical IDs from `candidate.projects` and `candidate.experience`.
+    - `parent_skill_ids`: union of all subskills encompassed by `explicit_ids` (`get_encompassed_skills_for_ids`).
+  - Requirement skill extraction (`_extract_requirement_skill_ids`): filters out hierarchy parent IDs matched via substring unless the entire requirement string directly canonicalizes to that parent ID.
+  - Assigns 4-tier source multiplier (`_calculate_source_multiplier`):
+    - **1.0 (Direct Explicit Match):** `requirement_skill_ids & explicit_ids` is non-empty.
+    - **0.80 (Hierarchical Parent Match):** `requirement_skill_ids & parent_skill_ids` is non-empty.
+    - **0.50 (Narrative Match):** `requirement_skill_ids & narrative_ids` is non-empty.
+    - **0.50 (Fallback / Unresolvable):** Requirement not found in taxonomy or candidate signals.
 
-- LRU capped at 128 entries
-- TTL of one hour
-- process-local only
-- revalidated as `CVSchema` before reuse
-- not written to disk
+### Stage 6: Multi-Provider LLM Capability Judge
+- **Location:** `app/providers/judge_provider.py`, `app/prompts/registry.py`
+- **Operations:**
+  - Batches all JD requirements into a single structured evaluation prompt.
+  - 4-Tier capability judge rubric:
+    - **90–100%:** Direct evidence of material operations.
+    - **50–75%:** Broader domain logical coverage.
+    - **1–49%:** Vague, incidental, or weak partial evidence.
+    - **0%:** Absent / irrelevant evidence.
+  - Provider failover chain (`configured_judge_chain()`):
+    1. **Primary: Google Gemini**
+       - Model: `gemini-3.8-flash` (pinned, timeout: `60s`, temperature: `0.0`).
+       - Retry: 503 errors trigger backoff retries at `1s`, `2s`, `4s` on the same model.
+       - Failover: 404 errors or exhausted 503 retries raise `JudgeProviderError` to move to the next provider.
+    2. **Secondary: Groq**
+       - Model: `openai/gpt-oss-120b` (base URL: `https://api.groq.com/openai/v1`, timeout: `60s`, temperature: `0.0`).
+    3. **Tertiary: OpenRouter**
+       - Model: `meta-llama/llama-3.3-70b-instruct:free` (base URL: `https://openrouter.ai/api/v1`, timeout: `60s`, temperature: `0.0`).
 
-This is a deliberate bounded retention of validated CV payloads in memory. It avoids repeated calls without introducing a new persistent cache service.
+### Stage 7: 70 / 20 / 10 Score Calculation
+- **Location:** `app/pipeline/ranking.py`
+- **Operations:**
+  - Individual skill score: $\text{final\_skill\_score} = \text{round}(\text{satisfaction\_percent} \times \text{source\_multiplier}, 2)$
+  - Required component (70%): $\text{required\_component} = \overline{\text{final\_skill\_score}}_{\text{required}} \times 0.70$
+  - Nice-to-have component (20%): $\text{nice\_to\_have\_component} = \overline{\text{final\_skill\_score}}_{\text{nice\_to\_have}} \times 0.20$
+  - Experience component (10%):
+    - Total years computed from parsed start/end dates across all role entries (`calculate_total_experience_years`).
+    - If `min_experience_years <= 0` or `None`: $\text{experience\_ratio} = 1.0$ (no division by zero).
+    - If `min_experience_years > 0`: $\text{experience\_ratio} = \min\left( \frac{\text{candidate\_total\_years}}{\text{min\_experience\_years}}, 1.0 \right)$
+    - $\text{experience\_component} = \text{experience\_ratio} \times 0.10$
+  - Final score: $\text{score} = \text{round}((\text{required\_component} + \text{nice\_to\_have\_component} + \text{experience\_component}) \times 100, 2)$
 
-## Taxonomy recovery stage
+### Stage 8: Process-Local In-Memory Caching
+- **Location:** `app/pipeline/run.py`
+- **Operations:**
+  - Fast process-local in-memory LRU cache (`OrderedDict`) for CV extraction snapshots and ranking evaluations.
+  - Automatic TTL expiration (`SNAPSHOT_TTL_SECONDS = 3600` / `CACHE_TTL_SECONDS = 3600`) and LRU eviction when size exceeds `max_entries=128`.
+  - Snapshot cache key: SHA-256 hash of cleaned text, prompt version, schema version, taxonomy version, and extraction model chain.
+  - Ranking cache key: SHA-256 hash of candidate JSON, job description JSON, judge prompt version, taxonomy version, and judge model chain.
 
-Before returning the extracted CV, the pipeline performs a taxonomy scan over the same redacted text seen by the model. It looks for exact taxonomy names and aliases, then unions those recovered skills with the model output. This is recorded as `taxonomy_recovered_skills` in `extraction_metadata` and is the mechanism used to recover literal skill terms that the model omitted.
+---
 
-## Ranking formula shape
+## 3. Provider Variance & Hierarchy Scope
 
-The authoritative current score is computed in `app/pipeline/ranking.py` as follows:
-
-```text
-R = matched_required / unique_required
-P = matched_preferred / unique_preferred
-
-if R is not None:
-    H = R + (0.2 * P * (1 - R))
-else:
-    H = 0.2 * P
-
-score = round(min(H, 1.0) * 100, 2)
-```
-
-The score is therefore:
-
-- required-coverage first
-- preferred evidence as a bounded bonus
-- capped at 100
-- zero semantic contribution under the current configuration (`SEMANTIC_WEIGHT = 0.0`)
-
-The semantic helper remains in the code path for diagnostics and future product evaluation, but it does not change the authoritative score today.
-
-## Embeddings: available, but not authoritative
-
-`app/providers/embeddings.py::semantic_fit()` remains available for local or API embedding use, and it is cached by content hash. However, the ranking pipeline sets `SEMANTIC_WEIGHT = 0.0`, so the final `score` is not influenced by embedding similarity. The data is still useful for diagnostics and future product evaluation, but it is not part of the current scoring contract.
-
-## What lives where (actual runtime)
-
-| Concern | Location | Reality |
-| --- | --- | --- |
-| HTTP layer | `app/main.py` | Flask, single merged evaluation route |
-| Extraction orchestration | `app/pipeline/run.py` | cleans, redacts, prompts, validates, snapshots, recovers taxonomy |
-| Ranking logic | `app/pipeline/ranking.py` | deterministic required-preferred scoring |
-| Output contract | `app/schemas/cv.py` | `CVSchema`, `JobDescription`, `RankingResult` |
-| Prompting | `app/prompts/registry.py` | single hand-written system prompt and prompt builder |
-| Model provider | `app/providers/hf_provider.py` | Hugging Face Inference Providers with fallback chain |
-| Embedding provider | `app/providers/embeddings.py` | local or API path available, but non-authoritative in score |
-| Skill vocabulary | `app/skills/taxonomy.yaml` | exact aliases + fuzzy fallback, with controlled taxonomy recovery |
-| File safety | `app/security/file_validator.py` | magic-byte validation and safe temporary storage names |
-| Evaluation dataset | `eval/` | still empty in the current repo state |
-
-## Known architectural gaps and open items
-
-1. **Extraction quality remains provider-dependent.** The service can produce valid but different extractions across runs because the upstream model output is not fully deterministic.
-2. **`eval/` is still empty.** There is no labelled extraction-quality dataset yet, so real-world accuracy remains unmeasured.
-3. **`min_experience_years` remains accepted but unused.** This is a product-policy gap, not a ranking implementation bug.
-4. **JD quality is still user-input dependent.** Section headers and narrative sentences pasted verbatim become literal skill entries unless the caller sanitizes the JD before submit.
-5. **Taxonomy coverage is finite.** The recovery scan is exact and bounded, and fuzzy matching remains a review point rather than a guaranteed semantic solution.
-
-## Current product boundaries
-
-- A query can produce a valid `SUCCESS` with a numeric `score` of `0.0` if the CV is non-empty but has no matching skill evidence.
-- `EMPTY` is a valid, non-error result for an extracted-but-uninformative CV and returns `ranking: null`.
-- The `taxonomy_recovered_skills` field exists to explain a skill is present in the document but not yet in the model output.
-- The score is deterministic for a validated input, but upstream extraction remains variable and does not guarantee identical CV structure across identical provider runs.
+- **LLM Judge Variance:** While temperature is set to `0.0`, semantic judging across different LLM providers (Gemini vs Groq vs OpenRouter) may exhibit minor score variations due to differences in model weights, tokenizers, and reasoning styles.
+- **Hierarchy Scope:** Hierarchical skill coverage is structured strictly in `taxonomy.yaml`. Broad parent skills (such as `Machine Learning`) cover standard foundational tabular algorithms, while specialized domains (`Deep Learning`) are isolated to prevent false-positive over-matching.
