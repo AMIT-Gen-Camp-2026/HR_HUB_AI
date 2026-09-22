@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>HR AI Assistant — Chatbot & Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Marked.js for clean Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root{
+    --primary: #1e4d2b;
+    --primary-light: #2d6a3f;
+    --primary-bg: #eaf3ed;
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --text: #1a202c;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --warn: #d97706;
+    --warn-bg: #fffbeb;
+    --success: #16a34a;
+    --success-bg: #f0fdf4;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header{
+    background: var(--primary);
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  }
+  header h1{
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-badges{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .badge-engine{
+    background: rgba(255,255,255,0.18);
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 500;
+  }
+  nav{
+    display: flex;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    overflow-x: auto;
+  }
+  nav button{
+    background: none;
+    border: 1px solid var(--border);
+    padding: 9px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: all .2s ease;
+  }
+  nav button:hover{
+    background: #f8fafc;
+    color: var(--text);
+  }
+  nav button.active{
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  main{
+    max-width: 1200px;
+    width: 100%;
+    margin: 18px auto;
+    padding: 0 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .page-panel{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    min-height: 620px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Two-column chat layout with left sidebar */
+  .chat-layout-wrapper{
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .chat-sidebar{
+    width: 280px;
+    min-width: 240px;
+    background: #f8fafc;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .sidebar-header{
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fafbfc;
+  }
+  .sidebar-title{
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-new-chat{
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-new-chat:hover{
+    background: var(--primary-light);
+  }
+  .sidebar-history-list{
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .history-item{
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .history-item:hover{
+    border-color: var(--primary);
+    background: #f0fdf4;
+  }
+  .history-item.active{
+    border-color: var(--primary);
+    background: var(--primary-bg);
+  }
+  .history-q{
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    padding-right: 22px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-time{
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+  .history-delete-btn{
+    position: absolute;
+    top: 8px;
+    right: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 3px;
+    border-radius: 4px;
+    opacity: 0.6;
+    transition: all .15s;
+  }
+  .history-item:hover .history-delete-btn{
+    opacity: 1;
+  }
+  .history-delete-btn:hover{
+    color: var(--danger);
+    background: var(--danger-bg);
+  }
+  .history-empty{
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 24px 10px;
+  }
+  .sidebar-footer{
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: #fafbfc;
+  }
+  .btn-clear-history{
+    width: 100%;
+    background: none;
+    border: 1px solid #fecaca;
+    color: var(--danger);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-clear-history:hover{
+    background: var(--danger-bg);
+  }
+
+  /* Right main chat area */
+  .chat-main-area{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .panel-header{
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .panel-header h2{
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-header p{
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .header-actions{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .chips-container{
+    padding: 10px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .chips-label{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+  .chip{
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text);
+    transition: all .15s ease;
+  }
+  .chip:hover{
+    background: var(--primary-bg);
+    border-color: var(--primary-light);
+    color: var(--primary);
+  }
+  .chat-thread{
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #ffffff;
+  }
+  .msg-row{
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+  }
+  .msg-row.user{
+    align-self: flex-end;
+    align-items: flex-end;
+  }
+  .msg-row.assistant{
+    align-self: flex-start;
+    align-items: flex-start;
+  }
+  .msg-bubble{
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+  .user .msg-bubble{
+    background: var(--primary);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .assistant .msg-bubble{
+    background: #f8fafc;
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
+    width: 100%;
+  }
+
+  /* Markdown Typography */
+  .md-content{
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .md-content p{
+    margin-bottom: 8px;
+  }
+  .md-content p:last-child{
+    margin-bottom: 0;
+  }
+  .md-content ul, .md-content ol{
+    margin-left: 20px;
+    margin-bottom: 8px;
+  }
+  .md-content li{
+    margin-bottom: 4px;
+  }
+  .md-content h1, .md-content h2, .md-content h3, .md-content h4{
+    margin-top: 10px;
+    margin-bottom: 6px;
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .md-content h1{ font-size: 17px; }
+  .md-content h2{ font-size: 15px; }
+  .md-content h3{ font-size: 14px; }
+  .md-content strong{
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .md-content code{
+    background: #e2e8f0;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12.5px;
+  }
+  .md-content pre{
+    background: #1e293b;
+    color: #f8fafc;
+    padding: 10px 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .md-content pre code{
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+  .md-content blockquote{
+    border-left: 3px solid var(--primary);
+    padding-left: 10px;
+    color: var(--muted);
+    margin: 8px 0;
+  }
+
+  .badge{
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .badge-success{ background: var(--success-bg); color: var(--success); }
+  .badge-danger{ background: var(--danger-bg); color: var(--danger); }
+  .badge-warn{ background: var(--warn-bg); color: var(--warn); }
+  .badge-primary{ background: var(--primary-bg); color: var(--primary); }
+
+  .sources-box{
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .source-card{
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .source-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .source-name{
+    font-weight: 600;
+    color: var(--primary);
+  }
+  .source-details{
+    color: var(--muted);
+    font-size: 12px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .chat-input-bar{
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: #fafbfc;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .chat-input-bar input{
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .chat-input-bar input:focus{
+    border-color: var(--primary);
+  }
+  .btn-send{
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .btn-send:hover{
+    background: var(--primary-light);
+  }
+  .btn-action{
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all .15s;
+  }
+  .btn-action:hover{
+    background: #f1f5f9;
+    color: var(--text);
+  }
+
+  /* Form & Ingestion Styles */
+  .form-scroll{
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .form-group{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-row{
+    display: flex;
+    gap: 14px;
+  }
+  .form-row > *{
+    flex: 1;
+  }
+  label{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  input[type="text"], input[type="number"], select, textarea{
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input:focus, select:focus, textarea:focus{
+    border-color: var(--primary);
+  }
+  .table-card{
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td{
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th{
+    background: #f8fafc;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .btn-delete{
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #fecaca;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .btn-delete:hover{
+    background: #fee2e2;
+  }
+  .hidden{ display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 Internal HR AI Assistant</h1>
+  <div class="header-badges">
+    <span class="badge-engine">⚡ Groq LLM (Qwen 2.5 27B)</span>
+    <span class="badge-engine">🧠 Local Multilingual Embeddings</span>
+    <span class="badge-engine">🗄️ Supabase pgvector DB</span>
+  </div>
+</header>
+
+<nav>
+  <button id="navData" class="active" onclick="switchTab('data')">
+    <span>📊</span> Data Queries
+  </button>
+  <button id="navPolicy" onclick="switchTab('policy')">
+    <span>📋</span> Policies & Regulations
+  </button>
+  <button id="navIngest" onclick="switchTab('ingest')">
+    <span>📄</span> Ingest Documents
+  </button>
+  <button id="navInstructor" onclick="switchTab('instructor')">
+    <span>👨‍🏫</span> Add Instructor
+  </button>
+</nav>
+
+<main>
+
+  <!-- PAGE 1: DATA QUERIES (Split with Left Sidebar) -->
+  <section id="panel-data" class="page-panel">
+    <div class="chat-layout-wrapper">
+      
+      <!-- LEFT HISTORY SIDEBAR -->
+      <aside class="chat-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title"><span>📜</span> History</div>
+          <button class="btn-new-chat" onclick="newChat('data')">➕ New</button>
+        </div>
+        <div id="historyListData" class="sidebar-history-list">
+          <p class="history-empty">Loading history...</p>
+        </div>
+        <div class="sidebar-footer">
+          <button class="btn-clear-history" onclick="confirmDeleteAllHistory('data')">🗑️ Clear History</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT CHAT MAIN AREA -->
+      <div class="chat-main-area">
+        <div class="panel-header">
+          <div>
+            <h2><span>📊</span> Lecturer Database Queries</h2>
+            <p>Natural language search powered by Groq LLM over Supabase lecturer records.</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-action" onclick="clearChat('data')">🧹 Clear Screen</button>
+          </div>
+        </div>
+
+        <div class="chips-container">
+          <span class="chips-label">Try asking:</span>
+          <button class="chip" onclick="quickAskData('Who are the available AI lecturers in Cairo?')">Available AI in Cairo</button>
+          <button class="chip" onclick="quickAskData('Show all Networks lecturers')">Networks lecturers</button>
+          <button class="chip" onclick="quickAskData('Who is available in Alexandria?')">Lecturers in Alexandria</button>
+          <button class="chip" onclick="quickAskData('Show Software track lecturers with Java skills')">Java Software track</button>
+        </div>
+
+        <div id="chatThreadData" class="chat-thread">
+          <div class="msg-row assistant">
+            <div class="msg-bubble">
+              <div class="md-content">Hello! I can help you search and filter instructor profiles. You can ask about tracks (AI, Networks, Software), locations (Cairo, Alexandria, Giza), skills, or availability.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input id="inputData" type="text" placeholder="Ask a question about lecturers (e.g., 'Available AI lecturers in Cairo')..." onkeydown="if(event.key==='Enter') sendDataQuery()">
+          <button class="btn-send" onclick="sendDataQuery()">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PAGE 2: POLICIES & REGULATIONS (Split with Left Sidebar) -->
+  <section id="panel-policy" class="page-panel hidden">
+    <div class="chat-layout-wrapper">
+      
+      <!-- LEFT HISTORY SIDEBAR -->
+      <aside class="chat-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title"><span>📜</span> History</div>
+          <button class="btn-new-chat" onclick="newChat('policy')">➕ New</button>
+        </div>
+        <div id="historyListPolicy" class="sidebar-history-list">
+          <p class="history-empty">Loading history...</p>
+        </div>
+        <div class="sidebar-footer">
+          <button class="btn-clear-history" onclick="confirmDeleteAllHistory('policy')">🗑️ Clear History</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT CHAT MAIN AREA -->
+      <div class="chat-main-area">
+        <div class="panel-header">
+          <div>
+            <h2><span>📋</span> Policies & Regulations Assistant</h2>
+            <p>Semantic search with Local Multilingual Embeddings + Groq LLM grounded on company policies.</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-action" onclick="clearChat('policy')">🧹 Clear Screen</button>
+          </div>
+        </div>
+
+        <div id="chatThreadPolicy" class="chat-thread">
+          <div class="msg-row assistant">
+            <div class="msg-bubble">
+              <div class="md-content">Hello! I can answer questions regarding company policies, evaluation standards, data protection rules, working hours, and approval workflows.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input id="inputPolicy" type="text" placeholder="Ask a policy question (e.g., 'What are the rules for working hours and attendance?')..." onkeydown="if(event.key==='Enter') sendPolicyQuery()">
+          <button class="btn-send" onclick="sendPolicyQuery()">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PAGE 3: INGEST DOCUMENTS -->
+  <section id="panel-ingest" class="page-panel hidden">
+    <div class="panel-header">
+      <div>
+        <h2><span>📄</span> Document Ingestion & Embeddings</h2>
+        <p>Upload PDF, Word (.docx), TXT files, or paste text to chunk, embed, and index into Supabase pgvector.</p>
+      </div>
+    </div>
+
+    <div class="form-scroll">
+      <div class="form-group">
+        <label>Upload Document File (.pdf, .docx, .doc, .txt, .json)</label>
+        <input type="file" id="docFileInput" accept=".pdf,.docx,.doc,.txt,.json">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Document Title</label>
+          <input type="text" id="docTitleInput" placeholder="e.g. Remote Work and Attendance Policy">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Or Paste Document Text Directly</label>
+        <textarea id="docTextInput" rows="6" placeholder="Paste full policy text or guidelines here..."></textarea>
+      </div>
+
+      <button class="btn-send" style="align-self:flex-start;" onclick="uploadDocument()">📥 Ingest & Index Document</button>
+
+      <div id="ingestResult"></div>
+
+      <div style="margin-top:20px;">
+        <h3 style="font-size:14px; color:var(--primary); margin-bottom:8px;">Existing Policy Documents in Database:</h3>
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Doc ID</th>
+                <th>Title</th>
+                <th>Sections</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="documentsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 4: ADD INSTRUCTOR -->
+  <section id="panel-instructor" class="page-panel hidden">
+    <div class="panel-header">
+      <div>
+        <h2><span>👨‍🏫</span> Instructor Management</h2>
+        <p>Register new instructors into the Supabase database or review existing roster.</p>
+      </div>
+    </div>
+
+    <div class="form-scroll">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="instName" placeholder="e.g. Tarek Mahmoud">
+        </div>
+        <div class="form-group">
+          <label>Track Specialization *</label>
+          <select id="instTrack">
+            <option value="AI">AI</option>
+            <option value="Networks">Networks</option>
+            <option value="Full-Stack">Full-Stack</option>
+            <option value="Testing">Testing</option>
+            <option value="Software">Software</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>City *</label>
+          <select id="instCity">
+            <option value="Cairo">Cairo</option>
+            <option value="Alexandria">Alexandria</option>
+            <option value="Giza">Giza</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Availability Status *</label>
+          <select id="instStatus">
+            <option value="available">Available</option>
+            <option value="not_available">Not Available</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Experience (Years)</label>
+          <input type="number" id="instExp" value="3" min="0" max="40">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="text" id="instEmail" placeholder="tarek@example.com">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" id="instPhone" placeholder="01012345678">
+        </div>
+        <div class="form-group">
+          <label>National ID</label>
+          <input type="text" id="instNationalId" placeholder="29001010100099">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Skills (Comma-separated) *</label>
+        <input type="text" id="instSkills" placeholder="e.g. Python, PyTorch, Deep Learning, NLP">
+      </div>
+
+      <button class="btn-send" style="align-self:flex-start;" onclick="addInstructor()">➕ Add Instructor</button>
+
+      <div id="instResult"></div>
+
+      <div style="margin-top:20px;">
+        <h3 style="font-size:14px; color:var(--primary); margin-bottom:8px;">Current Instructors Roster:</h3>
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Track</th>
+                <th>City</th>
+                <th>Status</th>
+                <th>Exp</th>
+                <th>Skills</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="lecturersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+let currentSessionIdData = null;
+let currentSessionIdPolicy = null;
+
+function renderMarkdown(text){
+  if(!text) return '';
+  if(typeof marked !== 'undefined' && marked.parse){
+    return marked.parse(text);
+  }
+  let html = escapeHtml(text);
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/^\s*[\-\*]\s+(.*)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+  html = html.replace(/\n\n/g, '<br><br>');
+  return html;
+}
+
+function switchTab(tab){
+  const tabs = ['data', 'policy', 'ingest', 'instructor'];
+  tabs.forEach(t => {
+    document.getElementById('nav' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('active');
+    document.getElementById('panel-' + t).classList.add('hidden');
+  });
+
+  const activeNav = document.getElementById('nav' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  const activePanel = document.getElementById('panel-' + tab);
+  if(activeNav) activeNav.classList.add('active');
+  if(activePanel) activePanel.classList.remove('hidden');
+
+  if(tab === 'data'){
+    document.getElementById('inputData').focus();
+    loadSidebarHistory('data');
+  }
+  if(tab === 'policy'){
+    document.getElementById('inputPolicy').focus();
+    loadSidebarHistory('policy');
+  }
+  if(tab === 'ingest') loadDocumentsList();
+  if(tab === 'instructor') loadLecturersList();
+}
+
+function appendMessage(threadId, sender, contentHtml){
+  const thread = document.getElementById(threadId);
+  const row = document.createElement('div');
+  row.className = `msg-row ${sender}`;
+  row.innerHTML = `<div class="msg-bubble">${contentHtml}</div>`;
+  thread.appendChild(row);
+  thread.scrollTop = thread.scrollHeight;
+}
+
+// ----------------------------------------------------
+// MULTI-TURN CHAT SESSIONS SIDEBAR
+// ----------------------------------------------------
+async function loadSidebarHistory(type){
+  const container = document.getElementById(type === 'data' ? 'historyListData' : 'historyListPolicy');
+  if(!container) return;
+
+  try {
+    const res = await fetch(`/api/chat/sessions?type=${type}`);
+    const data = await res.json();
+    const sessions = data.sessions || [];
+
+    if(!sessions.length){
+      container.innerHTML = '<p class="history-empty">No past chat conversations</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+    const activeId = type === 'data' ? currentSessionIdData : currentSessionIdPolicy;
+
+    sessions.forEach(session => {
+      const div = document.createElement('div');
+      div.className = 'history-item' + (session.id === activeId ? ' active' : '');
+      const timeStr = session.updated_at ? new Date(session.updated_at).toLocaleDateString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+      const msgCount = Array.isArray(session.messages) ? Math.floor(session.messages.length / 2) : 1;
+
+      div.innerHTML = `
+        <button class="history-delete-btn" title="Delete conversation" onclick="event.stopPropagation(); deleteSingleHistoryItem('${type}', '${session.id}')">🗑️</button>
+        <div class="history-q">${escapeHtml(session.title || 'Conversation')}</div>
+        <div class="history-time">💬 ${msgCount} turn${msgCount === 1 ? '' : 's'} · ${timeStr}</div>
+      `;
+
+      div.addEventListener('click', () => {
+        if(type === 'data') currentSessionIdData = session.id;
+        else currentSessionIdPolicy = session.id;
+
+        document.querySelectorAll(`#${type === 'data' ? 'historyListData' : 'historyListPolicy'} .history-item`).forEach(el => el.classList.remove('active'));
+        div.classList.add('active');
+
+        // Restore full conversation messages into thread
+        const threadId = type === 'data' ? 'chatThreadData' : 'chatThreadPolicy';
+        const thread = document.getElementById(threadId);
+        thread.innerHTML = '';
+
+        if(session.messages && session.messages.length > 0){
+          session.messages.forEach(msg => {
+            if(msg.role === 'user'){
+              appendMessage(threadId, 'user', escapeHtml(msg.content));
+            } else {
+              let bubbleHtml = `<div class="md-content">${renderMarkdown(msg.content)}</div>`;
+              if(msg.sources && msg.sources.length > 0){
+                bubbleHtml += `<div class="sources-box">`;
+                msg.sources.forEach(s => {
+                  bubbleHtml += `
+                    <div class="source-card">
+                      <div class="source-header">
+                        <span class="source-name">👤 ${escapeHtml(s.name)}</span>
+                        <span class="badge ${s.status === 'available' ? 'badge-success' : 'badge-warn'}">${s.status}</span>
+                      </div>
+                      <div class="source-details">
+                        <span><b>Track:</b> ${escapeHtml(s.track)}</span>
+                        <span><b>City:</b> ${escapeHtml(s.city)}</span>
+                        <span><b>Exp:</b> ${s.experience_years} yrs</span>
+                        <span><b>Phone:</b> ${escapeHtml(s.phone || 'N/A')}</span>
+                        <span><b>Email:</b> ${escapeHtml(s.email || 'N/A')}</span>
+                      </div>
+                      <div class="source-details" style="margin-top:4px;">
+                        <span><b>Skills:</b> ${s.skills.map(escapeHtml).join(', ')}</span>
+                      </div>
+                    </div>
+                  `;
+                });
+                }
+              if(msg.citations && msg.citations.length > 0){
+                bubbleHtml += `<div class="sources-box" style="margin-top:8px;">`;
+                bubbleHtml += `<div style="font-size:12px; font-weight:600; color:var(--primary); margin-bottom:6px;">📚 Verified Policy Citations (${msg.citations.length}):</div>`;
+                msg.citations.forEach(c => {
+                  bubbleHtml += `
+                    <div class="source-card" style="margin-bottom:6px;">
+                      <div class="source-header">
+                        <span class="source-name">📄 ${escapeHtml(c.doc)}</span>
+                        <span class="badge badge-primary">${escapeHtml(c.ref)}</span>
+                      </div>
+                      <div class="source-details" style="font-size:12px; color:var(--muted); margin-top:4px;">
+                        ${escapeHtml(c.text.substring(0, 180))}...
+                      </div>
+                    </div>
+                  `;
+                });
+                bubbleHtml += `</div>`;
+              }
+              appendMessage(threadId, 'assistant', bubbleHtml);
+            }
+          });
+        }
+      });
+
+      container.appendChild(div);
+    });
+  } catch(e) {
+    container.innerHTML = `<p class="history-empty" style="color:var(--danger)">Error loading history</p>`;
+  }
+}
+
+function newChat(type){
+  const threadId = type === 'data' ? 'chatThreadData' : 'chatThreadPolicy';
+  const thread = document.getElementById(threadId);
+  if(type === 'data') currentSessionIdData = null;
+  else currentSessionIdPolicy = null;
+
+  document.querySelectorAll(`#${type === 'data' ? 'historyListData' : 'historyListPolicy'} .history-item`).forEach(el => el.classList.remove('active'));
+
+  if(type === 'data'){
+    thread.innerHTML = `
+      <div class="msg-row assistant">
+        <div class="msg-bubble"><div class="md-content">Hello! I can help you search and filter instructor profiles. You can ask about tracks (AI, Networks, Software), locations (Cairo, Alexandria, Giza), skills, or availability.</div></div>
+      </div>
+    `;
+    document.getElementById('inputData').focus();
+  } else {
+    thread.innerHTML = `
+      <div class="msg-row assistant">
+        <div class="msg-bubble"><div class="md-content">Hello! I can answer questions regarding company policies, evaluation standards, data protection rules, working hours, and approval workflows.</div></div>
+      </div>
+    `;
+    document.getElementById('inputPolicy').focus();
+  }
+}
+
+async function deleteSingleHistoryItem(type, sessionId){
+  if(!confirm('Delete this whole chat conversation?')) return;
+  try {
+    await fetch(`/api/chat/sessions/${sessionId}`, { method: 'DELETE' });
+    if((type === 'data' && currentSessionIdData === sessionId) ||
+       (type === 'policy' && currentSessionIdPolicy === sessionId)){
+      newChat(type);
+    }
+    loadSidebarHistory(type);
+  } catch(e) {
+    alert('Error deleting chat session: ' + e.message);
+  }
+}
+
+async function confirmDeleteAllHistory(type){
+  const label = type === 'data' ? 'Data Queries' : 'Policies & Regulations';
+  if(!confirm(`Delete all ${label} chat sessions from the database?`)) return;
+  try {
+    await fetch(`/api/chat/sessions?type=${type}`, { method: 'DELETE' });
+    newChat(type);
+    loadSidebarHistory(type);
+  } catch(e) {
+    alert('Error clearing history: ' + e.message);
+  }
+}
+
+function clearChat(tab){
+  newChat(tab);
+}
+
+// ----------------------------------------------------
+// PAGE 1: DATA QUERIES
+// ----------------------------------------------------
+function quickAskData(text){
+  document.getElementById('inputData').value = text;
+  sendDataQuery();
+}
+
+async function sendDataQuery(){
+  const input = document.getElementById('inputData');
+  const q = input.value.trim();
+  if(!q) return;
+  input.value = '';
+
+  appendMessage('chatThreadData', 'user', escapeHtml(q));
+
+  const loadingId = 'loading-' + Date.now();
+  appendMessage('chatThreadData', 'assistant', `<span id="${loadingId}">Thinking with Groq LLM & searching database...</span>`);
+
+  try {
+    const res = await fetch('/api/chat_data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, session_id: currentSessionIdData })
+    });
+    const data = await res.json();
+    currentSessionIdData = data.session_id;
+
+    let bubbleHtml = `<div class="md-content">${renderMarkdown(data.answer)}</div>`;
+
+    if(data.sources && data.sources.length > 0){
+      bubbleHtml += `<div class="sources-box">`;
+      data.sources.forEach(s => {
+        bubbleHtml += `
+          <div class="source-card">
+            <div class="source-header">
+              <span class="source-name">👤 ${escapeHtml(s.name)}</span>
+              <span class="badge ${s.status === 'available' ? 'badge-success' : 'badge-warn'}">${s.status}</span>
+            </div>
+            <div class="source-details">
+              <span><b>Track:</b> ${escapeHtml(s.track)}</span>
+              <span><b>City:</b> ${escapeHtml(s.city)}</span>
+              <span><b>Exp:</b> ${s.experience_years} yrs</span>
+              <span><b>Phone:</b> ${escapeHtml(s.phone || 'N/A')}</span>
+              <span><b>Email:</b> ${escapeHtml(s.email || 'N/A')}</span>
+            </div>
+            <div class="source-details" style="margin-top:4px;">
+              <span><b>Skills:</b> ${s.skills.map(escapeHtml).join(', ')}</span>
+            </div>
+          </div>
+        `;
+      });
+      bubbleHtml += `</div>`;
+    }
+
+    document.getElementById(loadingId).parentElement.innerHTML = bubbleHtml;
+    loadSidebarHistory('data');
+  } catch(e) {
+    document.getElementById(loadingId).parentElement.innerHTML = `<span class="badge badge-danger">Error</span> ${e.message || 'Failed to process query'}`;
+  }
+}
+
+// ----------------------------------------------------
+// PAGE 2: POLICIES & REGULATIONS
+// ----------------------------------------------------
+function quickAskPolicy(text){
+  document.getElementById('inputPolicy').value = text;
+  sendPolicyQuery();
+}
+
+async function sendPolicyQuery(){
+  const input = document.getElementById('inputPolicy');
+  const q = input.value.trim();
+  if(!q) return;
+  input.value = '';
+
+  appendMessage('chatThreadPolicy', 'user', escapeHtml(q));
+
+  const loadingId = 'loading-' + Date.now();
+  appendMessage('chatThreadPolicy', 'assistant', `<span id="${loadingId}">Searching database embeddings & generating with Groq...</span>`);
+
+  try {
+    const res = await fetch('/api/chat_policy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, session_id: currentSessionIdPolicy })
+    });
+    const data = await res.json();
+    currentSessionIdPolicy = data.session_id;
+
+    let bubbleHtml = '';
+    if(data.status === 'not_covered'){
+      bubbleHtml += `<span class="badge badge-warn">Not Covered</span> <div class="md-content" style="margin-top:4px;">${renderMarkdown(data.answer)}</div>`;
+    } else {
+      bubbleHtml += `<div class="md-content">${renderMarkdown(data.answer)}</div>`;
+    }
+
+    if(data.citations && data.citations.length > 0){
+      bubbleHtml += `<div class="sources-box" style="margin-top:10px;">`;
+      bubbleHtml += `<div style="font-size:12px; font-weight:600; color:var(--primary); margin-bottom:6px;">📚 Verified Policy Citations (${data.citations.length}):</div>`;
+      data.citations.forEach(c => {
+        bubbleHtml += `
+          <div class="source-card" style="margin-bottom:6px;">
+            <div class="source-header">
+              <span class="source-name">📄 ${escapeHtml(c.doc)}</span>
+              <span class="badge badge-primary">${escapeHtml(c.ref)}</span>
+            </div>
+            <div class="source-details" style="font-size:12px; color:var(--muted); margin-top:4px;">
+              ${escapeHtml(c.text.substring(0, 180))}...
+            </div>
+          </div>
+        `;
+      });
+      bubbleHtml += `</div>`;
+    }
+    if(data.note){
+      bubbleHtml += `<div style="font-size:11px; color:var(--muted); margin-top:6px; font-style:italic;">ℹ️ ${escapeHtml(data.note)}</div>`;
+    }
+
+    document.getElementById(loadingId).parentElement.innerHTML = bubbleHtml;
+    loadSidebarHistory('policy');
+  } catch(e) {
+    document.getElementById(loadingId).parentElement.innerHTML = `<span class="badge badge-danger">Error</span> ${e.message || 'Failed to process policy query'}`;
+  }
+}
+
+// ----------------------------------------------------
+// PAGE 3: INGEST DOCUMENTS
+// ----------------------------------------------------
+async function uploadDocument(){
+  const fileInput = document.getElementById('docFileInput');
+  const title = document.getElementById('docTitleInput').value.trim();
+  const rawText = document.getElementById('docTextInput').value.trim();
+  const resBox = document.getElementById('ingestResult');
+
+  if(!fileInput.files[0] && !rawText){
+    resBox.innerHTML = `<div style="color:var(--danger); font-size:13px; margin-top:8px;">⚠️ Please select a file or enter document text.</div>`;
+    return;
+  }
+
+  resBox.innerHTML = `<div style="color:var(--primary); font-size:13px; margin-top:8px;">⏳ Processing, chunking and embedding document into pgvector...</div>`;
+
+  const formData = new FormData();
+  if(fileInput.files[0]) formData.append('file', fileInput.files[0]);
+  if(title) formData.append('title', title);
+  if(rawText) formData.append('raw_text', rawText);
+
+  try {
+    const res = await fetch('/api/documents/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if(res.ok){
+      resBox.innerHTML = `
+        <div style="background:var(--success-bg); border:1px solid #bbf7d0; color:var(--success); padding:10px 14px; border-radius:8px; margin-top:8px; font-size:13px;">
+          ✅ Document <b>"${escapeHtml(data.title)}"</b> ingested successfully into <b>${data.doc_id}</b> with <b>${data.paragraphs_count}</b> vector chunks in database!
+        </div>
+      `;
+      document.getElementById('docTitleInput').value = '';
+      document.getElementById('docTextInput').value = '';
+      fileInput.value = '';
+      loadDocumentsList();
+    } else {
+      resBox.innerHTML = `<div style="color:var(--danger); font-size:13px; margin-top:8px;">⚠️ ${data.detail || 'Upload failed'}</div>`;
+    }
+  } catch(e) {
+    resBox.innerHTML = `<div style="color:var(--danger); font-size:13px; margin-top:8px;">⚠️ ${e.message}</div>`;
+  }
+}
+
+async function loadDocumentsList(){
+  try {
+    const res = await fetch('/api/documents');
+    const data = await res.json();
+    const tbody = document.getElementById('documentsTableBody');
+    tbody.innerHTML = '';
+    (data.documents || []).forEach(doc => {
+      const tr = document.createElement('tr');
+      const pCount = doc.paragraphs_count || (Array.isArray(doc.paragraphs) ? doc.paragraphs.length : 1);
+      tr.innerHTML = `
+        <td><span class="badge badge-primary">${escapeHtml(doc.doc_id)}</span></td>
+        <td><b>${escapeHtml(doc.title)}</b></td>
+        <td>${pCount} section(s)</td>
+        <td><button class="btn-delete" onclick="deleteDocument('${escapeHtml(doc.doc_id)}')">Delete</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    console.error('Failed to load documents list', e);
+  }
+}
+
+async function deleteDocument(docId){
+  if(!confirm('Are you sure you want to delete policy document ' + docId + '?')) return;
+  try {
+    const res = await fetch('/api/documents/' + encodeURIComponent(docId), { method: 'DELETE' });
+    if(res.ok){
+      loadDocumentsList();
+    } else {
+      alert('Failed to delete document');
+    }
+  } catch(e) {
+    alert('Error deleting document: ' + e.message);
+  }
+}
+
+// ----------------------------------------------------
+// PAGE 4: INSTRUCTOR MANAGEMENT
+// ----------------------------------------------------
+async function addInstructor(){
+  const name = document.getElementById('instName').value.trim();
+  const track = document.getElementById('instTrack').value;
+  const city = document.getElementById('instCity').value;
+  const status = document.getElementById('instStatus').value;
+  const exp = parseInt(document.getElementById('instExp').value) || 0;
+  const email = document.getElementById('instEmail').value.trim();
+  const phone = document.getElementById('instPhone').value.trim();
+  const national_id = document.getElementById('instNationalId').value.trim();
+  const skills = document.getElementById('instSkills').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const resBox = document.getElementById('instResult');
+
+  if(!name){
+    resBox.innerHTML = `<div style="color:var(--danger); font-size:13px; margin-top:8px;">⚠️ Full Name is required.</div>`;
+    return;
+  }
+  if(!skills.length){
+    resBox.innerHTML = `<div style="color:var(--danger); font-size:13px; margin-top:8px;">⚠️ Please enter at least one skill.</div>`;
+    return;
+  }
+
+  resBox.innerHTML = `<div style="color:var(--primary); font-size:13px; margin-top:8px;">⏳ Adding instructor...</div>`;
+
+  try {
+    const res = await fetch('/api/lecturers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, track, city, status, experience_years: exp, email, phone, national_id, skills
+      })
+    });
+    const data = await res.json();
+    if(res.ok){
+      resBox.innerHTML = `
+        <div style="background:var(--success-bg); border:1px solid #bbf7d0; color:var(--success); padding:10px 14px; border-radius:8px; margin-top:8px; font-size:13px;">
+          ✅ Instructor <b>${escapeHtml(name)}</b> added successfully!
+        </div>
+      `;
+      document.getElementById('instName').value = '';
+      document.getElementById('instEmail').value = '';
+      document.getElementById('instPhone').value = '';
+      document.getElementById('instNationalId').value = '';
+      document.getElementById('instSkills').value = '';
+      loadLecturersList();
+    } else {
+      resBox.innerHTML = `<div style="color:var(--danger); font-size:13px; margin-top:8px;">⚠️ ${data.detail || 'Failed to add instructor'}</div>`;
+    }
+  } catch(e) {
+    resBox.innerHTML = `<div style="color:var(--danger); font-size:13px; margin-top:8px;">⚠️ ${e.message}</div>`;
+  }
+}
+
+async function loadLecturersList(){
+  try {
+    const res = await fetch('/api/lecturers');
+    const data = await res.json();
+    const tbody = document.getElementById('lecturersTableBody');
+    tbody.innerHTML = '';
+    (data.lecturers || []).forEach(l => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>#${l.id}</td>
+        <td><b>${escapeHtml(l.name)}</b></td>
+        <td><span class="badge badge-primary">${escapeHtml(l.track)}</span></td>
+        <td>${escapeHtml(l.city)}</td>
+        <td><span class="badge ${l.status==='available'?'badge-success':'badge-warn'}">${l.status}</span></td>
+        <td>${l.experience_years} yrs</td>
+        <td style="font-size:11px; color:var(--muted);">${(l.skills||[]).map(escapeHtml).join(', ')}</td>
+        <td><button class="btn-delete" onclick="deleteInstructor(${l.id})">Delete</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    console.error('Failed to load lecturers list', e);
+  }
+}
+
+async function deleteInstructor(id){
+  if(!confirm('Are you sure you want to delete this instructor?')) return;
+  try {
+    await fetch('/api/lecturers/' + id, { method: 'DELETE' });
+    loadLecturersList();
+  } catch(e) {
+    alert('Error deleting instructor: ' + e.message);
+  }
+}
+
+function escapeHtml(text){
+  if(!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Initial load on page startup
+document.addEventListener('DOMContentLoaded', () => {
+  loadSidebarHistory('data');
+});
+</script>
+</body>
+</html>
