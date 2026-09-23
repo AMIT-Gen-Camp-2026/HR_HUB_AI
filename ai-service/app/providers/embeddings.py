@@ -104,5 +104,15 @@ def semantic_fit(cv: CVSchema, jd: JobDescription) -> float:
     if not cv_text or not jd_text:
         return 0.0
 
-    cv_vector, jd_vector = embed([cv_text, jd_text])
-    return _cosine_similarity(cv_vector, jd_vector)
+    try:
+        cv_vector, jd_vector = embed([cv_text, jd_text])
+        return _cosine_similarity(cv_vector, jd_vector)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Embedding model unavailable, using text overlap fallback")
+        cv_words = set(cv_text.lower().split())
+        jd_words = set(jd_text.lower().split())
+        if not jd_words:
+            return 0.0
+        overlap = len(cv_words & jd_words)
+        return min(overlap / len(jd_words), 1.0)
